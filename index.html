@@ -234,6 +234,7 @@
             padding: 20px 20px 16px 20px;
             border-bottom: 1px solid #efefef;
             background: #fff;
+            flex-shrink: 0;
         }
 
         .fullscreen-modal__title {
@@ -248,12 +249,11 @@
             display: flex;
             gap: 12px;
             justify-content: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .fullscreen-modal__button {
             flex: 1;
-            max-width: 140px;
             padding: 10px 16px;
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -264,6 +264,7 @@
             background: #fff;
             color: #333;
             text-align: center;
+            white-space: nowrap;
         }
 
         .fullscreen-modal__button:active {
@@ -292,18 +293,19 @@
 
         .fullscreen-modal__content {
             flex: 1;
-            padding: 24px 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             overflow-y: auto;
+            min-height: 0;
         }
 
-        /* Дата и время в одну строку */
+        /* Дата и время в одну строку - всегда горизонтально */
         .fullscreen-modal__datetime {
             display: flex;
             gap: 12px;
-            justify-content: center;
+            flex-shrink: 0;
         }
 
         .fullscreen-modal__datetime-input {
@@ -323,15 +325,23 @@
             background: #fff;
         }
 
+        /* Текстария на всю доступную высоту */
+        .fullscreen-modal__textarea-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
         .fullscreen-modal__textarea {
             width: 100%;
-            min-height: 200px;
+            flex: 1;
             padding: 14px;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
             font-size: 15px;
             font-family: inherit;
-            resize: vertical;
+            resize: none;
             background: #fafafa;
             line-height: 1.5;
         }
@@ -342,7 +352,7 @@
             background: #fff;
         }
 
-        /* Адаптив */
+        /* Адаптив для мобильных - сохраняем горизонтальное расположение */
         @media (max-width: 600px) {
             body {
                 padding: 12px;
@@ -361,19 +371,43 @@
                 font-size: 16px;
             }
             
+            /* Кнопки всегда в строку */
             .fullscreen-modal__actions {
-                flex-direction: column;
-                align-items: center;
+                flex-wrap: nowrap;
+                gap: 8px;
             }
             
             .fullscreen-modal__button {
-                max-width: none;
-                width: 100%;
+                padding: 10px 12px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            
+            /* Дата и время всегда в строку */
+            .fullscreen-modal__datetime {
+                flex-direction: row;
+                gap: 10px;
+            }
+            
+            .fullscreen-modal__datetime-input {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+
+        /* Для очень маленьких экранов уменьшаем отступы, но сохраняем строку */
+        @media (max-width: 480px) {
+            .fullscreen-modal__actions {
+                gap: 6px;
+            }
+            
+            .fullscreen-modal__button {
+                padding: 8px 10px;
+                font-size: 13px;
             }
             
             .fullscreen-modal__datetime {
-                flex-direction: column;
-                gap: 10px;
+                gap: 8px;
             }
         }
     </style>
@@ -427,7 +461,7 @@
         generateId: () => Date.now() + Math.random() * 10000,
         
         load: function() {
-            const saved = localStorage.getItem('journal_entries_v5');
+            const saved = localStorage.getItem('journal_entries_v6');
             if (saved) {
                 try {
                     this.entries = JSON.parse(saved);
@@ -475,7 +509,7 @@
         
         save: function() {
             this.sortEntries();
-            localStorage.setItem('journal_entries_v5', JSON.stringify(this.entries));
+            localStorage.setItem('journal_entries_v6', JSON.stringify(this.entries));
         },
         
         getGroupedEntries: function() {
@@ -510,7 +544,6 @@
         addEntry: function(date, time, text) {
             if (!text || !text.trim()) return null;
             
-            // Создаем дату из выбранных даты и времени
             const dateTimeStr = `${date}T${time}:00`;
             const createdAt = new Date(dateTimeStr);
             
@@ -609,7 +642,6 @@
         },
         
         bindEvents: function() {
-            // Клик по записи для редактирования
             $('.entry-item').off('click').on('click', function(e) {
                 e.stopPropagation();
                 const entryId = $(this).data('entry-id');
@@ -636,16 +668,12 @@
             JournalView.render();
             this.bindEvents();
             this.updateGlobalSearch();
-            
-            // Скролл в самый низ при загрузке
             JournalModel.scrollToBottom();
         },
         
         bindEvents: function() {
-            // Кнопка добавления
             $('#addButton').on('click', () => this.openAddModal());
             
-            // Глобальный поиск
             $('#globalSearchInput').on('input', (e) => this.handleGlobalSearch(e.target.value));
             $(document).on('click', (e) => {
                 if (!$(e.target).closest('.global-search').length) {
@@ -739,7 +767,9 @@
                             <input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}">
                             <input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}">
                         </div>
-                        <textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea>
+                        <div class="fullscreen-modal__textarea-wrapper">
+                            <textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea>
+                        </div>
                     </div>
                 </div>
             `;
@@ -750,15 +780,12 @@
             const $timeInput = $modal.find('#timeInput');
             const $textInput = $modal.find('#textInput');
             
-            // Автофокус на текст
             setTimeout(() => $textInput.focus(), 100);
             
-            // Закрытие модального окна
             const closeModal = () => {
                 $modal.remove();
             };
             
-            // Сохранение
             $modal.find('#saveBtn').on('click', () => {
                 const date = $dateInput.val();
                 const time = $timeInput.val();
@@ -776,7 +803,6 @@
                 }
             });
             
-            // Удаление (если есть)
             if (options.showDelete) {
                 $modal.find('#deleteBtn').on('click', () => {
                     if (options.onDelete()) {
@@ -785,10 +811,8 @@
                 });
             }
             
-            // Отмена
             $modal.find('#cancelBtn').on('click', closeModal);
             
-            // Закрытие по ESC
             $(document).on('keydown.' + modalId, (e) => {
                 if (e.key === 'Escape') {
                     closeModal();
@@ -796,7 +820,6 @@
                 }
             });
             
-            // Закрытие по клику на фон
             $modal.on('click', (e) => {
                 if (e.target === $modal[0]) {
                     closeModal();
@@ -847,7 +870,6 @@
             });
             $suggestions.show();
             
-            // Клик по подсказке
             $('.global-suggestion-item').off('click').on('click', function() {
                 const entryId = $(this).data('entry-id');
                 if (entryId) {
@@ -868,7 +890,6 @@
         }
     };
     
-    // Запуск
     $(document).ready(() => {
         JournalController.init();
     });
