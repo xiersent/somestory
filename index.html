@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Ежедневник</title>
-    <script src="vendor/js/jquery-3.6.0.min.js"></script>
-    <script src="vendor/js/ejs.min.js"></script>
+    <title>Планетаход + Ежедневник | Объединенная система</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ejs@3.1.8/ejs.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -23,16 +23,75 @@
             line-height: 1.5;
         }
 
-        /* Основной контейнер */
-        .journal {
+        /* Общие стили */
+        .app-container {
             max-width: 700px;
             margin: 0 auto;
+        }
+
+        /* Шапка с именем и переключателем */
+        .app-header {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+
+        .user-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .edit-name-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: #333;
+            border-color: #333;
+            color: white;
         }
 
         /* Глобальный поиск */
         .global-search {
             position: relative;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .global-search__input {
@@ -59,7 +118,7 @@
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
@@ -67,30 +126,57 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .global-suggestion-item {
+        .suggestion-item {
             padding: 12px 16px;
             cursor: pointer;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
             transition: background 0.1s;
         }
 
-        .global-suggestion-item:last-child {
+        .suggestion-item:last-child {
             border-bottom: none;
         }
 
-        .global-suggestion-item:active {
+        .suggestion-item:hover,
+        .suggestion-item:active {
             background: #f9f9f9;
         }
 
-        /* Контейнер с днями */
+        .suggestion-type {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 8px;
+            font-weight: 500;
+        }
+
+        .suggestion-type.journal {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .suggestion-type.card {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        /* Контейнеры представлений */
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        /* Стили для дневника */
         .days-container {
             display: flex;
             flex-direction: column;
             gap: 24px;
         }
 
-        /* Группа дня */
         .day-group {
             background: #fff;
             border-radius: 16px;
@@ -99,7 +185,6 @@
             border: 1px solid #e8e8e8;
         }
 
-        /* Заголовок даты - по центру */
         .day-group__header {
             padding: 16px 20px;
             text-align: center;
@@ -119,18 +204,16 @@
             margin-top: 4px;
         }
 
-        /* Список записей */
         .entries-list {
             display: flex;
             flex-direction: column;
         }
 
-        /* Отдельная запись - кликабельна для редактирования */
         .entry-item {
             padding: 16px 20px;
             border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
             cursor: pointer;
+            transition: background 0.2s;
         }
 
         .entry-item:last-child {
@@ -141,7 +224,8 @@
             background: #f9f9f9;
         }
 
-        .entry-item.highlight {
+        .entry-item.highlight,
+        .card.highlight {
             background: #fff9c4;
             animation: highlightPulse 0.6s ease;
         }
@@ -165,7 +249,180 @@
             color: #bbb;
         }
 
-        /* Пустое состояние */
+        /* Стили для карточек */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+            transition: all 0.2s;
+        }
+
+        .card__header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .card__title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+            font-family: inherit;
+        }
+
+        .card__title:focus {
+            outline: none;
+            border-color: #999;
+            background: #fff;
+        }
+
+        .card__content {
+            margin: 12px 0;
+        }
+
+        .card__textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            background: #fafafa;
+        }
+
+        .card__textarea:focus {
+            outline: none;
+            border-color: #999;
+            background: #fff;
+        }
+
+        .card__relations {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #efefef;
+        }
+
+        .relation-section {
+            margin-bottom: 12px;
+        }
+
+        .relation-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relation-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .relation-tag {
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .relation-tag:hover {
+            background: #e0e0e0;
+        }
+
+        .remove-relation {
+            cursor: pointer;
+            color: #999;
+            font-weight: bold;
+        }
+
+        .add-relation-btn {
+            background: none;
+            border: 1px dashed #ccc;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .relation-search {
+            margin-top: 8px;
+            display: none;
+        }
+
+        .relation-search.visible {
+            display: flex;
+            gap: 8px;
+        }
+
+        .relation-search-input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .card__footer {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid #efefef;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bump-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .delete-card-btn {
+            background: none;
+            border: none;
+            color: #d4380d;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        /* Пустые состояния */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -174,12 +431,8 @@
             color: #aaa;
         }
 
-        .empty-state__text {
-            font-size: 14px;
-        }
-
-        /* Плавающая кнопка добавления - по центру внизу */
-        .floating-add-button {
+        /* Плавающая кнопка */
+        .floating-btn {
             position: fixed;
             bottom: 24px;
             left: 50%;
@@ -197,702 +450,916 @@
             transition: all 0.2s ease;
             z-index: 1000;
             font-size: 28px;
-            font-weight: 400;
             color: white;
-            line-height: 1;
         }
 
-        .floating-add-button:active {
+        .floating-btn:active {
             transform: translateX(-50%) scale(0.94);
-            background: #1a1a1a;
         }
 
-        /* Полноэкранное модальное окно */
-        .fullscreen-modal {
+        /* Модальное окно */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: #fff;
-            z-index: 2000;
+            background: rgba(0,0,0,0.5);
             display: flex;
-            flex-direction: column;
-            animation: slideUp 0.2s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
-
-        .fullscreen-modal__header {
-            padding: 20px 20px 16px 20px;
-            border-bottom: 1px solid #efefef;
-            background: #fff;
-            flex-shrink: 0;
-        }
-
-        .fullscreen-modal__title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .fullscreen-modal__actions {
-            display: flex;
-            gap: 12px;
+            align-items: center;
             justify-content: center;
-            flex-wrap: nowrap;
+            z-index: 2000;
         }
 
-        .fullscreen-modal__button {
-            flex: 1;
-            padding: 10px 16px;
+        .modal__content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal__title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .modal__input {
+            width: 100%;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 10px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.1s;
-            background: #fff;
-            color: #333;
-            text-align: center;
-            white-space: nowrap;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
 
-        .fullscreen-modal__button:active {
-            transform: scale(0.98);
-            background: #f5f5f5;
-        }
-
-        .fullscreen-modal__button--save {
-            background: #333;
-            border-color: #333;
-            color: white;
-        }
-
-        .fullscreen-modal__button--save:active {
-            background: #1a1a1a;
-        }
-
-        .fullscreen-modal__button--delete {
-            border-color: #ffccc7;
-            color: #d4380d;
-        }
-
-        .fullscreen-modal__button--delete:active {
-            background: #fff2f0;
-        }
-
-        .fullscreen-modal__content {
-            flex: 1;
-            padding: 20px;
+        .modal__buttons {
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-            min-height: 0;
+            gap: 10px;
         }
 
-        /* Дата и время в одну строку - всегда горизонтально */
-        .fullscreen-modal__datetime {
-            display: flex;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .fullscreen-modal__datetime-input {
+        .modal__btn {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
+            padding: 10px;
+            border: 1px solid #ddd;
             border-radius: 10px;
-            font-size: 15px;
-            font-family: inherit;
-            background: #fafafa;
-            text-align: center;
-        }
-
-        .fullscreen-modal__datetime-input:focus {
-            outline: none;
-            border-color: #999;
             background: #fff;
+            cursor: pointer;
         }
 
-        /* Текстария на всю доступную высоту */
-        .fullscreen-modal__textarea-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
+        .modal__btn--primary {
+            background: #333;
+            color: white;
+            border-color: #333;
         }
 
-        .fullscreen-modal__textarea {
-            width: 100%;
-            flex: 1;
-            padding: 14px;
-            border: 1px solid #e0e0e0;
+        .create-menu {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
             border-radius: 12px;
-            font-size: 15px;
-            font-family: inherit;
-            resize: none;
-            background: #fafafa;
-            line-height: 1.5;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            z-index: 1001;
         }
 
-        .fullscreen-modal__textarea:focus {
-            outline: none;
-            border-color: #999;
-            background: #fff;
-        }
-
-        /* Адаптив для мобильных - сохраняем горизонтальное расположение */
-        @media (max-width: 600px) {
-            body {
-                padding: 12px;
-                padding-bottom: 90px;
-            }
-            
-            .entry-item {
-                padding: 14px 16px;
-            }
-            
-            .day-group__header {
-                padding: 12px 16px;
-            }
-            
-            .day-group__date {
-                font-size: 16px;
-            }
-            
-            /* Кнопки всегда в строку */
-            .fullscreen-modal__actions {
-                flex-wrap: nowrap;
-                gap: 8px;
-            }
-            
-            .fullscreen-modal__button {
-                padding: 10px 12px;
-                font-size: 14px;
-                white-space: nowrap;
-            }
-            
-            /* Дата и время всегда в строку */
-            .fullscreen-modal__datetime {
-                flex-direction: row;
-                gap: 10px;
-            }
-            
-            .fullscreen-modal__datetime-input {
-                padding: 10px;
-                font-size: 14px;
-            }
-        }
-
-        /* Для очень маленьких экранов уменьшаем отступы, но сохраняем строку */
-        @media (max-width: 480px) {
-            .fullscreen-modal__actions {
-                gap: 6px;
-            }
-            
-            .fullscreen-modal__button {
-                padding: 8px 10px;
-                font-size: 13px;
-            }
-            
-            .fullscreen-modal__datetime {
-                gap: 8px;
-            }
+        .create-menu-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-
-<div class="journal">
-    <!-- Глобальный поиск -->
-    <div class="global-search">
-        <input type="text" id="globalSearchInput" class="global-search__input" 
-               placeholder="Поиск записей..." autocomplete="off">
-        <div id="globalSuggestions" class="global-search__suggestions"></div>
-    </div>
-
-    <div class="days-container" id="daysContainer"></div>
-</div>
-
-<!-- Плавающая кнопка добавления -->
-<button class="floating-add-button" id="addButton">+</button>
-
-<!-- EJS шаблоны -->
-<script type="text/ejs" id="dayGroupTemplate">
-    <div class="day-group" data-date="<%= date %>">
-        <div class="day-group__header">
-            <div class="day-group__date"><%= formattedDate %></div>
-            <div class="day-group__weekday"><%= weekday %></div>
+    <div class="app-container">
+        <!-- Шапка -->
+        <div class="app-header">
+            <div class="user-section">
+                <span class="user-name" id="userNameDisplay"></span>
+                <button class="edit-name-btn" id="editNameBtn">Изменить имя</button>
+            </div>
+            <div class="view-tabs">
+                <button class="tab-btn active" data-view="cards">📇 Карточки</button>
+                <button class="tab-btn" data-view="journal">📝 Дневник</button>
+            </div>
         </div>
-        <div class="entries-list">
-            <% entries.forEach(function(entry) { %>
-                <div class="entry-item" data-entry-id="<%= entry.id %>">
-                    <div class="entry-item__content"><%= entry.text %></div>
-                    <div class="entry-item__footer"><%= entry.time %></div>
-                </div>
-            <% }); %>
+
+        <!-- Глобальный поиск -->
+        <div class="global-search">
+            <input type="text" id="globalSearchInput" class="global-search__input" 
+                   placeholder="Поиск по всем записям и карточкам..." autocomplete="off">
+            <div id="globalSuggestions" class="global-search__suggestions"></div>
+        </div>
+
+        <!-- Представление карточек -->
+        <div id="cardsView" class="view-container active">
+            <div class="cards-container" id="cardsContainer"></div>
+        </div>
+
+        <!-- Представление дневника -->
+        <div id="journalView" class="view-container">
+            <div class="days-container" id="daysContainer"></div>
         </div>
     </div>
-</script>
 
-<script type="text/ejs" id="emptyTemplate">
-    <div class="empty-state">
-        <div class="empty-state__text">Нет записей</div>
-        <div class="empty-state__text" style="font-size: 13px; margin-top: 8px;">Нажмите + внизу, чтобы добавить</div>
+    <!-- Плавающая кнопка -->
+    <button class="floating-btn" id="floatingBtn">+</button>
+
+    <!-- Модальное окно для имени -->
+    <div id="nameModal" class="modal" style="display: none;">
+        <div class="modal__content">
+            <div class="modal__title">Введите ваше имя</div>
+            <input type="text" id="userNameInput" class="modal__input" placeholder="Ваше имя">
+            <div class="modal__buttons">
+                <button class="modal__btn modal__btn--primary" id="saveNameBtn">Сохранить</button>
+            </div>
+        </div>
     </div>
-</script>
 
-<script>
-    // -------------------- Модель данных --------------------
-    const JournalModel = {
-        entries: [],
-        
-        generateId: () => Date.now() + Math.random() * 10000,
-        
-        load: function() {
-            const saved = localStorage.getItem('journal_entries_v6');
-            if (saved) {
-                try {
-                    this.entries = JSON.parse(saved);
-                    this.sortEntries();
-                } catch(e) { console.error(e); }
-            }
+    <!-- Меню создания -->
+    <div id="createMenu" class="create-menu" style="display: none;">
+        <button class="create-menu-btn" id="createJournalBtn">📝 Запись в дневник</button>
+        <button class="create-menu-btn" id="createCardBtn">📇 Карточку</button>
+    </div>
+
+    <script>
+        // ==================== Единая модель данных ====================
+        const AppModel = {
+            journalEntries: [],
+            cards: [],
+            userName: '',
             
-            // Добавляем демо-записи если пусто
-            if (this.entries.length === 0) {
+            generateId: () => Date.now() + Math.random() * 10000,
+            
+            load: function() {
+                // Загрузка записей дневника
+                const savedJournal = localStorage.getItem('journal_entries_v7');
+                if (savedJournal) {
+                    try {
+                        this.journalEntries = JSON.parse(savedJournal);
+                    } catch(e) { console.error(e); }
+                }
+                
+                // Загрузка карточек
+                const savedCards = localStorage.getItem('cards_v2');
+                if (savedCards) {
+                    try {
+                        this.cards = JSON.parse(savedCards);
+                        this.cards.forEach(card => {
+                            if (!card.parentIds) card.parentIds = [];
+                            if (!card.childIds) card.childIds = [];
+                            if (!card.bumpedAt) card.bumpedAt = card.createdAt || new Date().toISOString();
+                        });
+                    } catch(e) { console.error(e); }
+                }
+                
+                // Загрузка имени
+                const savedName = localStorage.getItem('user_name');
+                if (savedName) {
+                    this.userName = savedName;
+                }
+                
+                // Добавляем демо-записи если пусто
+                if (this.journalEntries.length === 0 && this.cards.length === 0) {
+                    this.addDemoData();
+                }
+                
+                this.sortAll();
+            },
+            
+            addDemoData: function() {
                 const today = new Date();
                 const todayStr = today.toISOString().slice(0,10);
                 const yesterday = new Date(Date.now() - 86400000);
                 const yesterdayStr = yesterday.toISOString().slice(0,10);
-                const twoDaysAgo = new Date(Date.now() - 2*86400000);
-                const twoDaysAgoStr = twoDaysAgo.toISOString().slice(0,10);
                 
-                this.entries.push({
-                    id: this.generateId(),
-                    date: twoDaysAgoStr,
-                    text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.",
-                    createdAt: twoDaysAgo.toISOString()
-                });
-                this.entries.push({
+                this.journalEntries.push({
                     id: this.generateId(),
                     date: yesterdayStr,
-                    text: "Вчерашняя запись. Нажмите на любую запись, чтобы отредактировать или удалить её.",
+                    text: "📝 Первая запись в дневнике! Теперь можно создавать и карточки, и записи.",
                     createdAt: yesterday.toISOString()
                 });
-                this.entries.push({
+                
+                this.journalEntries.push({
                     id: this.generateId(),
                     date: todayStr,
-                    text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.",
+                    text: "✨ Сегодня создал карточку «Планетаход». Попробуй создать ссылку на неё: [[card:" + (Date.now() + 1000) + "]]",
                     createdAt: today.toISOString()
                 });
-                this.save();
-            }
-        },
-        
-        sortEntries: function() {
-            this.entries.sort((a, b) => {
-                if (a.date !== b.date) return a.date.localeCompare(b.date);
-                return new Date(a.createdAt) - new Date(b.createdAt);
-            });
-        },
-        
-        save: function() {
-            this.sortEntries();
-            localStorage.setItem('journal_entries_v6', JSON.stringify(this.entries));
-        },
-        
-        getGroupedEntries: function() {
-            const groups = new Map();
-            this.entries.forEach(entry => {
-                if (!groups.has(entry.date)) {
-                    groups.set(entry.date, []);
-                }
-                groups.get(entry.date).push(entry);
-            });
-            
-            const result = [];
-            for (let [date, entries] of groups.entries()) {
-                const formattedEntries = entries.map(entry => ({
-                    ...entry,
-                    time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-                }));
                 
-                const dateObj = new Date(date);
-                result.push({
-                    date: date,
-                    formattedDate: dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-                    weekday: dateObj.toLocaleDateString('ru-RU', { weekday: 'long' }),
-                    entries: formattedEntries
+                this.cards.push({
+                    id: this.generateId(),
+                    title: "Планетаход",
+                    content: "Это карточка, которая может быть связана с записями в дневнике. Попробуй создать запись с упоминанием [[card:ID]]",
+                    parentIds: [],
+                    childIds: [],
+                    createdAt: new Date().toISOString(),
+                    bumpedAt: new Date().toISOString()
                 });
-            }
+                
+                this.sortAll();
+                this.save();
+            },
             
-            result.sort((a, b) => a.date.localeCompare(b.date));
-            return result;
-        },
-        
-        addEntry: function(date, time, text) {
-            if (!text || !text.trim()) return null;
+            sortAll: function() {
+                this.journalEntries.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                this.cards.sort((a, b) => new Date(a.bumpedAt) - new Date(b.bumpedAt));
+            },
             
-            const dateTimeStr = `${date}T${time}:00`;
-            const createdAt = new Date(dateTimeStr);
+            save: function() {
+                localStorage.setItem('journal_entries_v7', JSON.stringify(this.journalEntries));
+                localStorage.setItem('cards_v2', JSON.stringify(this.cards));
+                localStorage.setItem('user_name', this.userName);
+            },
             
-            const newEntry = {
-                id: this.generateId(),
-                date: date,
-                text: text.trim(),
-                createdAt: createdAt.toISOString()
-            };
-            this.entries.push(newEntry);
-            this.save();
-            return newEntry;
-        },
-        
-        updateEntry: function(id, date, time, newText) {
-            const entry = this.entries.find(e => e.id == id);
-            if (entry && newText && newText.trim()) {
+            // Методы для дневника
+            addJournalEntry: function(date, time, text) {
+                if (!text || !text.trim()) return null;
+                
                 const dateTimeStr = `${date}T${time}:00`;
                 const createdAt = new Date(dateTimeStr);
                 
-                entry.text = newText.trim();
-                entry.date = date;
-                entry.createdAt = createdAt.toISOString();
+                const newEntry = {
+                    id: this.generateId(),
+                    date: date,
+                    text: this.processMentions(text.trim()),
+                    createdAt: createdAt.toISOString()
+                };
+                this.journalEntries.push(newEntry);
+                this.sortAll();
                 this.save();
-                return true;
-            }
-            return false;
-        },
-        
-        deleteEntry: function(id) {
-            const index = this.entries.findIndex(e => e.id == id);
-            if (index !== -1) {
-                this.entries.splice(index, 1);
-                this.save();
-                return true;
-            }
-            return false;
-        },
-        
-        searchEntries: function(query) {
-            if (!query || !query.trim()) return [];
-            const lowerQuery = query.toLowerCase().trim();
-            return this.entries.filter(entry => 
-                entry.text.toLowerCase().includes(lowerQuery)
-            ).map(entry => ({
-                ...entry,
-                dateFormatted: new Date(entry.date).toLocaleDateString('ru-RU')
-            }));
-        },
-        
-        getTodayDate: function() {
-            const now = new Date();
-            return now.toISOString().slice(0,10);
-        },
-        
-        getCurrentTime: function() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            return `${hours}:${minutes}`;
-        },
-        
-        getEntryById: function(id) {
-            return this.entries.find(e => e.id == id);
-        },
-        
-        scrollToBottom: function() {
-            setTimeout(() => {
-                window.scrollTo({
-                    top: document.body.scrollHeight,
-                    behavior: 'smooth'
+                return newEntry;
+            },
+            
+            updateJournalEntry: function(id, date, time, text) {
+                const entry = this.journalEntries.find(e => e.id == id);
+                if (entry && text && text.trim()) {
+                    const dateTimeStr = `${date}T${time}:00`;
+                    const createdAt = new Date(dateTimeStr);
+                    
+                    entry.text = this.processMentions(text.trim());
+                    entry.date = date;
+                    entry.createdAt = createdAt.toISOString();
+                    this.sortAll();
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            deleteJournalEntry: function(id) {
+                const index = this.journalEntries.findIndex(e => e.id == id);
+                if (index !== -1) {
+                    this.journalEntries.splice(index, 1);
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            getGroupedJournalEntries: function() {
+                const groups = new Map();
+                this.journalEntries.forEach(entry => {
+                    if (!groups.has(entry.date)) {
+                        groups.set(entry.date, []);
+                    }
+                    groups.get(entry.date).push(entry);
                 });
-            }, 100);
-        }
-    };
-    
-    // -------------------- Представление --------------------
-    const JournalView = {
-        render: function() {
-            const groups = JournalModel.getGroupedEntries();
-            const $container = $('#daysContainer');
-            $container.empty();
-            
-            if (groups.length === 0) {
-                const emptyHtml = ejs.render($('#emptyTemplate').text(), {});
-                $container.html(emptyHtml);
-                return;
-            }
-            
-            groups.forEach(group => {
-                const html = ejs.render($('#dayGroupTemplate').text(), group);
-                $container.append(html);
-            });
-            
-            this.bindEvents();
-        },
-        
-        bindEvents: function() {
-            $('.entry-item').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const entryId = $(this).data('entry-id');
-                if (entryId) {
-                    JournalController.openEditModal(entryId);
-                }
-            });
-        },
-        
-        highlightEntryById: function(entryId) {
-            const $entry = $(`.entry-item[data-entry-id="${entryId}"]`);
-            if ($entry.length) {
-                $entry.addClass('highlight');
-                setTimeout(() => $entry.removeClass('highlight'), 1000);
-                $entry.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    };
-    
-    // -------------------- Контроллер --------------------
-    const JournalController = {
-        init: function() {
-            JournalModel.load();
-            JournalView.render();
-            this.bindEvents();
-            this.updateGlobalSearch();
-            JournalModel.scrollToBottom();
-        },
-        
-        bindEvents: function() {
-            $('#addButton').on('click', () => this.openAddModal());
-            
-            $('#globalSearchInput').on('input', (e) => this.handleGlobalSearch(e.target.value));
-            $(document).on('click', (e) => {
-                if (!$(e.target).closest('.global-search').length) {
-                    $('#globalSuggestions').hide();
-                }
-            });
-        },
-        
-        openAddModal: function() {
-            const today = JournalModel.getTodayDate();
-            const currentTime = JournalModel.getCurrentTime();
-            
-            this.showFullscreenModal({
-                title: 'Новая запись',
-                dateValue: today,
-                timeValue: currentTime,
-                textValue: '',
-                showDelete: false,
-                onSave: (date, time, text) => {
-                    if (text && text.trim()) {
-                        const newEntry = JournalModel.addEntry(date, time, text);
-                        if (newEntry) {
-                            JournalView.render();
-                            this.updateGlobalSearch();
-                            setTimeout(() => {
-                                JournalView.highlightEntryById(newEntry.id);
-                            }, 100);
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        },
-        
-        openEditModal: function(entryId) {
-            const entry = JournalModel.getEntryById(entryId);
-            if (!entry) return;
-            
-            const entryDate = entry.date;
-            const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            
-            this.showFullscreenModal({
-                title: 'Редактировать запись',
-                dateValue: entryDate,
-                timeValue: entryTime,
-                textValue: entry.text,
-                showDelete: true,
-                onSave: (date, time, text) => {
-                    if (text && text.trim()) {
-                        JournalModel.updateEntry(entryId, date, time, text);
-                        JournalView.render();
-                        this.updateGlobalSearch();
-                        setTimeout(() => {
-                            JournalView.highlightEntryById(entryId);
-                        }, 100);
-                        return true;
-                    }
-                    return false;
-                },
-                onDelete: () => {
-                    if (confirm('Уничтожить эту запись?')) {
-                        JournalModel.deleteEntry(entryId);
-                        JournalView.render();
-                        this.updateGlobalSearch();
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        },
-        
-        showFullscreenModal: function(options) {
-            const modalId = 'fullscreenModal_' + Date.now();
-            
-            const deleteButtonHtml = options.showDelete ? 
-                '<button class="fullscreen-modal__button fullscreen-modal__button--delete" id="deleteBtn">Уничтожить</button>' : '';
-            
-            const modalHtml = `
-                <div class="fullscreen-modal" id="${modalId}">
-                    <div class="fullscreen-modal__header">
-                        <div class="fullscreen-modal__title">${options.title}</div>
-                        <div class="fullscreen-modal__actions">
-                            <button class="fullscreen-modal__button fullscreen-modal__button--save" id="saveBtn">Сохранить</button>
-                            ${deleteButtonHtml}
-                            <button class="fullscreen-modal__button" id="cancelBtn">Отмена</button>
-                        </div>
-                    </div>
-                    <div class="fullscreen-modal__content">
-                        <div class="fullscreen-modal__datetime">
-                            <input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}">
-                            <input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}">
-                        </div>
-                        <div class="fullscreen-modal__textarea-wrapper">
-                            <textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            $('body').append(modalHtml);
-            const $modal = $('#' + modalId);
-            const $dateInput = $modal.find('#dateInput');
-            const $timeInput = $modal.find('#timeInput');
-            const $textInput = $modal.find('#textInput');
-            
-            setTimeout(() => $textInput.focus(), 100);
-            
-            const closeModal = () => {
-                $modal.remove();
-            };
-            
-            $modal.find('#saveBtn').on('click', () => {
-                const date = $dateInput.val();
-                const time = $timeInput.val();
-                const text = $textInput.val();
                 
-                if (!date || !time) {
-                    alert('Заполните дату и время');
+                const result = [];
+                for (let [date, entries] of groups.entries()) {
+                    const formattedEntries = entries.map(entry => ({
+                        ...entry,
+                        time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+                        text: this.renderMentions(entry.text)
+                    }));
+                    
+                    const dateObj = new Date(date);
+                    result.push({
+                        date: date,
+                        formattedDate: dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+                        weekday: dateObj.toLocaleDateString('ru-RU', { weekday: 'long' }),
+                        entries: formattedEntries
+                    });
+                }
+                
+                result.sort((a, b) => a.date.localeCompare(b.date));
+                return result;
+            },
+            
+            // Методы для карточек
+            addCard: function(title = '') {
+                const newCard = {
+                    id: this.generateId(),
+                    title: title || 'Новая карточка',
+                    content: '',
+                    parentIds: [],
+                    childIds: [],
+                    createdAt: new Date().toISOString(),
+                    bumpedAt: new Date().toISOString()
+                };
+                this.cards.push(newCard);
+                this.sortAll();
+                this.save();
+                return newCard;
+            },
+            
+            updateCard: function(id, updates) {
+                const card = this.cards.find(c => c.id == id);
+                if (card) {
+                    Object.assign(card, updates);
+                    if (updates.content) {
+                        card.content = this.processMentions(updates.content);
+                    }
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            deleteCard: function(id) {
+                const index = this.cards.findIndex(c => c.id == id);
+                if (index !== -1) {
+                    // Удаляем связи
+                    this.cards.forEach(card => {
+                        card.parentIds = card.parentIds.filter(pid => pid != id);
+                        card.childIds = card.childIds.filter(cid => cid != id);
+                    });
+                    this.cards.splice(index, 1);
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            addRelation: function(cardId, targetId, type) {
+                const card = this.cards.find(c => c.id == cardId);
+                const target = this.cards.find(c => c.id == targetId);
+                if (card && target && cardId != targetId) {
+                    if (type === 'parent' && !card.parentIds.includes(targetId)) {
+                        card.parentIds.push(targetId);
+                        if (!target.childIds.includes(cardId)) {
+                            target.childIds.push(cardId);
+                        }
+                    } else if (type === 'child' && !card.childIds.includes(targetId)) {
+                        card.childIds.push(targetId);
+                        if (!target.parentIds.includes(cardId)) {
+                            target.parentIds.push(cardId);
+                        }
+                    }
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            removeRelation: function(cardId, targetId, type) {
+                const card = this.cards.find(c => c.id == cardId);
+                const target = this.cards.find(c => c.id == targetId);
+                if (card && target) {
+                    if (type === 'parent') {
+                        card.parentIds = card.parentIds.filter(id => id != targetId);
+                        if (target) target.childIds = target.childIds.filter(id => id != cardId);
+                    } else if (type === 'child') {
+                        card.childIds = card.childIds.filter(id => id != targetId);
+                        if (target) target.parentIds = target.parentIds.filter(id => id != cardId);
+                    }
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            bumpCard: function(id) {
+                const card = this.cards.find(c => c.id == id);
+                if (card) {
+                    const oldestDate = new Date(Math.min(...this.cards.map(c => new Date(c.bumpedAt))));
+                    card.bumpedAt = new Date(oldestDate.getTime() - 1).toISOString();
+                    this.sortAll();
+                    this.save();
+                    return true;
+                }
+                return false;
+            },
+            
+            // Обработка упоминаний
+            processMentions: function(text) {
+                // Обрабатываем упоминания карточек: [[card:ID]]
+                return text.replace(/\[\[card:(\d+(?:\.\d+)?)\]\]/g, (match, id) => {
+                    const card = this.cards.find(c => c.id == id);
+                    if (card) {
+                        return `📇 ${card.title}`;
+                    }
+                    return match;
+                });
+            },
+            
+            renderMentions: function(text) {
+                // Рендерим упоминания как кликабельные ссылки
+                return text.replace(/📇 ([^\s]+)/g, (match, title) => {
+                    const card = this.cards.find(c => c.title === title);
+                    if (card) {
+                        return `<span class="mention-link" data-card-id="${card.id}" style="color: #7b1fa2; cursor: pointer; text-decoration: underline;">📇 ${title}</span>`;
+                    }
+                    return match;
+                });
+            },
+            
+            // Глобальный поиск
+            searchAll: function(query) {
+                if (!query || !query.trim()) return [];
+                const lowerQuery = query.toLowerCase().trim();
+                
+                const journalResults = this.journalEntries.filter(entry => 
+                    entry.text.toLowerCase().includes(lowerQuery)
+                ).map(entry => ({
+                    id: entry.id,
+                    type: 'journal',
+                    title: entry.text.substring(0, 50) + (entry.text.length > 50 ? '...' : ''),
+                    date: new Date(entry.createdAt).toLocaleDateString('ru-RU')
+                }));
+                
+                const cardResults = this.cards.filter(card => 
+                    card.title.toLowerCase().includes(lowerQuery) || 
+                    card.content.toLowerCase().includes(lowerQuery)
+                ).map(card => ({
+                    id: card.id,
+                    type: 'card',
+                    title: card.title,
+                    date: new Date(card.createdAt).toLocaleDateString('ru-RU')
+                }));
+                
+                return [...journalResults, ...cardResults];
+            },
+            
+            getTodayDate: function() {
+                return new Date().toISOString().slice(0,10);
+            },
+            
+            getCurrentTime: function() {
+                const now = new Date();
+                return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+        };
+        
+        // ==================== Представление ====================
+        const AppView = {
+            currentView: 'cards',
+            
+            render: function() {
+                if (this.currentView === 'cards') {
+                    this.renderCards();
+                } else {
+                    this.renderJournal();
+                }
+            },
+            
+            renderCards: function() {
+                const $container = $('#cardsContainer');
+                $container.empty();
+                
+                if (AppModel.cards.length === 0) {
+                    $container.html('<div class="empty-state"><div class="empty-state__text">Нет карточек</div></div>');
                     return;
                 }
                 
-                if (options.onSave(date, time, text)) {
-                    closeModal();
-                } else if (!text.trim()) {
-                    alert('Запись не может быть пустой');
-                }
-            });
+                AppModel.cards.forEach(card => {
+                    const parents = card.parentIds.map(id => AppModel.cards.find(c => c.id == id)).filter(Boolean);
+                    const children = card.childIds.map(id => AppModel.cards.find(c => c.id == id)).filter(Boolean);
+                    
+                    const cardHtml = `
+                        <div class="card" data-card-id="${card.id}">
+                            <div class="card__header">
+                                <input type="text" class="card__title" value="${this.escapeHtml(card.title)}" placeholder="Название карточки">
+                                <button class="delete-card-btn" data-card-id="${card.id}">✕</button>
+                            </div>
+                            <div class="card__content">
+                                <textarea class="card__textarea" placeholder="Содержание карточки... Используйте [[card:ID]] для ссылок">${this.escapeHtml(card.content)}</textarea>
+                            </div>
+                            <div class="card__relations">
+                                <div class="relation-section">
+                                    <div class="relation-title">
+                                        Родительские карточки
+                                        <button class="add-relation-btn" data-type="parent" data-card-id="${card.id}">+ добавить</button>
+                                    </div>
+                                    <div class="relation-list" id="parents-list-${card.id}">
+                                        ${parents.map(p => `
+                                            <span class="relation-tag" data-card-id="${p.id}">
+                                                📇 ${this.escapeHtml(p.title)}
+                                                <span class="remove-relation" data-type="parent" data-target-id="${p.id}">✕</span>
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="relation-section">
+                                    <div class="relation-title">
+                                        Дочерние карточки
+                                        <button class="add-relation-btn" data-type="child" data-card-id="${card.id}">+ добавить</button>
+                                    </div>
+                                    <div class="relation-list" id="children-list-${card.id}">
+                                        ${children.map(c => `
+                                            <span class="relation-tag" data-card-id="${c.id}">
+                                                📇 ${this.escapeHtml(c.title)}
+                                                <span class="remove-relation" data-type="child" data-target-id="${c.id}">✕</span>
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card__footer">
+                                <span>Создано: ${new Date(card.createdAt).toLocaleString()}</span>
+                                <button class="bump-btn" data-card-id="${card.id}">⬆️ мне важнее эта</button>
+                            </div>
+                        </div>
+                    `;
+                    $container.append(cardHtml);
+                });
+                
+                this.bindCardEvents();
+            },
             
-            if (options.showDelete) {
-                $modal.find('#deleteBtn').on('click', () => {
-                    if (options.onDelete()) {
-                        closeModal();
+            renderJournal: function() {
+                const groups = AppModel.getGroupedJournalEntries();
+                const $container = $('#daysContainer');
+                $container.empty();
+                
+                if (groups.length === 0) {
+                    $container.html('<div class="empty-state"><div class="empty-state__text">Нет записей</div></div>');
+                    return;
+                }
+                
+                groups.forEach(group => {
+                    const groupHtml = `
+                        <div class="day-group" data-date="${group.date}">
+                            <div class="day-group__header">
+                                <div class="day-group__date">${group.formattedDate}</div>
+                                <div class="day-group__weekday">${group.weekday}</div>
+                            </div>
+                            <div class="entries-list">
+                                ${group.entries.map(entry => `
+                                    <div class="entry-item" data-entry-id="${entry.id}">
+                                        <div class="entry-item__content">${entry.text}</div>
+                                        <div class="entry-item__footer">${entry.time}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    $container.append(groupHtml);
+                });
+                
+                this.bindJournalEvents();
+            },
+            
+            bindCardEvents: function() {
+                $('.card__title').off('change').on('change', function() {
+                    const cardId = $(this).closest('.card').data('card-id');
+                    const newTitle = $(this).val();
+                    AppModel.updateCard(cardId, { title: newTitle });
+                });
+                
+                $('.card__textarea').off('change').on('change', function() {
+                    const cardId = $(this).closest('.card').data('card-id');
+                    const newContent = $(this).val();
+                    AppModel.updateCard(cardId, { content: newContent });
+                    AppView.render();
+                });
+                
+                $('.delete-card-btn').off('click').on('click', function(e) {
+                    e.stopPropagation();
+                    const cardId = $(this).data('card-id');
+                    if (confirm('Удалить эту карточку?')) {
+                        AppModel.deleteCard(cardId);
+                        AppView.render();
                     }
                 });
+                
+                $('.bump-btn').off('click').on('click', function(e) {
+                    e.stopPropagation();
+                    const cardId = $(this).data('card-id');
+                    AppModel.bumpCard(cardId);
+                    AppView.render();
+                    setTimeout(() => {
+                        $(`.card[data-card-id="${cardId}"]`).addClass('highlight');
+                        setTimeout(() => $(`.card[data-card-id="${cardId}"]`).removeClass('highlight'), 1000);
+                    }, 100);
+                });
+                
+                $('.relation-tag').off('click').on('click', function(e) {
+                    if ($(e.target).hasClass('remove-relation')) return;
+                    const cardId = $(this).data('card-id');
+                    $(`.card[data-card-id="${cardId}"]`).get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    $(`.card[data-card-id="${cardId}"]`).addClass('highlight');
+                    setTimeout(() => $(`.card[data-card-id="${cardId}"]`).removeClass('highlight'), 1500);
+                });
+                
+                $('.remove-relation').off('click').on('click', function(e) {
+                    e.stopPropagation();
+                    const cardId = $(this).closest('.card').data('card-id');
+                    const targetId = $(this).data('target-id');
+                    const type = $(this).data('type');
+                    AppModel.removeRelation(cardId, targetId, type);
+                    AppView.render();
+                });
+                
+                $('.add-relation-btn').off('click').on('click', function() {
+                    const cardId = $(this).data('card-id');
+                    const type = $(this).data('type');
+                    const targetTitle = prompt(`Введите название карточки для связи (${type === 'parent' ? 'родительская' : 'дочерняя'}):`);
+                    if (targetTitle) {
+                        const targetCard = AppModel.cards.find(c => c.title.toLowerCase().includes(targetTitle.toLowerCase()));
+                        if (targetCard) {
+                            AppModel.addRelation(cardId, targetCard.id, type);
+                            AppView.render();
+                        } else {
+                            alert('Карточка не найдена');
+                        }
+                    }
+                });
+            },
+            
+            bindJournalEvents: function() {
+                $('.entry-item').off('click').on('click', function() {
+                    const entryId = $(this).data('entry-id');
+                    AppController.openEditJournalModal(entryId);
+                });
+                
+                $('.mention-link').off('click').on('click', function(e) {
+                    e.stopPropagation();
+                    const cardId = $(this).data('card-id');
+                    AppController.switchToCard(cardId);
+                });
+            },
+            
+            highlightItem: function(id, type) {
+                if (type === 'card') {
+                    const $card = $(`.card[data-card-id="${id}"]`);
+                    if ($card.length) {
+                        $card.addClass('highlight');
+                        $card.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => $card.removeClass('highlight'), 1500);
+                    }
+                } else if (type === 'journal') {
+                    const $entry = $(`.entry-item[data-entry-id="${id}"]`);
+                    if ($entry.length) {
+                        $entry.addClass('highlight');
+                        $entry.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => $entry.removeClass('highlight'), 1500);
+                    }
+                }
+            },
+            
+            escapeHtml: function(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                });
             }
-            
-            $modal.find('#cancelBtn').on('click', closeModal);
-            
-            $(document).on('keydown.' + modalId, (e) => {
-                if (e.key === 'Escape') {
-                    closeModal();
-                    $(document).off('keydown.' + modalId);
-                }
-            });
-            
-            $modal.on('click', (e) => {
-                if (e.target === $modal[0]) {
-                    closeModal();
-                }
-            });
-        },
+        };
         
-        escapeHtml: function(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        },
-        
-        handleGlobalSearch: function(query) {
-            const $suggestions = $('#globalSuggestions');
-            if (!query.trim()) {
-                $suggestions.hide();
-                return;
-            }
+        // ==================== Контроллер ====================
+        const AppController = {
+            init: function() {
+                AppModel.load();
+                $('#userNameDisplay').text(AppModel.userName || 'Гость');
+                AppView.render();
+                this.bindEvents();
+            },
             
-            const results = JournalModel.searchEntries(query);
-            if (results.length === 0) {
-                $suggestions.html('<div class="global-suggestion-item">Ничего не найдено</div>').show();
-                return;
-            }
+            bindEvents: function() {
+                $('.tab-btn').on('click', (e) => {
+                    const view = $(e.target).data('view');
+                    this.switchView(view);
+                });
+                
+                $('#floatingBtn').on('click', () => {
+                    $('#createMenu').fadeToggle();
+                    setTimeout(() => {
+                        $(document).one('click', () => $('#createMenu').fadeOut());
+                    }, 100);
+                });
+                
+                $('#createJournalBtn').on('click', () => {
+                    $('#createMenu').hide();
+                    this.openAddJournalModal();
+                });
+                
+                $('#createCardBtn').on('click', () => {
+                    $('#createMenu').hide();
+                    const newCard = AppModel.addCard();
+                    this.switchView('cards');
+                    setTimeout(() => {
+                        AppView.highlightItem(newCard.id, 'card');
+                    }, 100);
+                });
+                
+                $('#editNameBtn').on('click', () => {
+                    $('#nameModal').show();
+                    $('#userNameInput').val(AppModel.userName);
+                });
+                
+                $('#saveNameBtn').on('click', () => {
+                    const name = $('#userNameInput').val().trim();
+                    if (name) {
+                        AppModel.userName = name;
+                        AppModel.save();
+                        $('#userNameDisplay').text(name);
+                        $('#nameModal').hide();
+                    }
+                });
+                
+                $('#globalSearchInput').on('input', (e) => this.handleGlobalSearch(e.target.value));
+                $(document).on('click', (e) => {
+                    if (!$(e.target).closest('.global-search').length) {
+                        $('#globalSuggestions').hide();
+                    }
+                    if (!$(e.target).closest('#floatingBtn').length && !$(e.target).closest('#createMenu').length) {
+                        $('#createMenu').hide();
+                    }
+                });
+            },
             
-            $suggestions.empty();
-            results.slice(0, 8).forEach(entry => {
-                let displayText = entry.text.length > 80 ? entry.text.slice(0, 80) + '…' : entry.text;
-                const lowerQuery = query.toLowerCase();
-                const index = displayText.toLowerCase().indexOf(lowerQuery);
-                if (index !== -1) {
-                    const before = displayText.slice(0, index);
-                    const match = displayText.slice(index, index + query.length);
-                    const after = displayText.slice(index + query.length);
-                    displayText = before + match + after;
-                }
-                $suggestions.append(`
-                    <div class="global-suggestion-item" data-entry-id="${entry.id}">
-                        <div style="font-size: 11px; color: #888;">${entry.dateFormatted}</div>
-                        <div>${displayText}</div>
+            switchView: function(view) {
+                AppView.currentView = view;
+                $('.tab-btn').removeClass('active');
+                $(`.tab-btn[data-view="${view}"]`).addClass('active');
+                $('.view-container').removeClass('active');
+                $(`#${view}View`).addClass('active');
+                AppView.render();
+            },
+            
+            switchToCard: function(cardId) {
+                this.switchView('cards');
+                setTimeout(() => {
+                    AppView.highlightItem(cardId, 'card');
+                }, 100);
+            },
+            
+            openAddJournalModal: function() {
+                const today = AppModel.getTodayDate();
+                const currentTime = AppModel.getCurrentTime();
+                
+                const modalHtml = `
+                    <div id="journalModal" class="modal">
+                        <div class="modal__content">
+                            <div class="modal__title">Новая запись в дневнике</div>
+                            <input type="date" id="journalDate" class="modal__input" value="${today}">
+                            <input type="time" id="journalTime" class="modal__input" value="${currentTime}">
+                            <textarea id="journalText" class="modal__input" rows="4" placeholder="Текст записи... Используйте [[card:ID]] для ссылок на карточки"></textarea>
+                            <div class="modal__buttons">
+                                <button class="modal__btn" id="cancelJournalBtn">Отмена</button>
+                                <button class="modal__btn modal__btn--primary" id="saveJournalBtn">Сохранить</button>
+                            </div>
+                        </div>
                     </div>
-                `);
-            });
-            $suggestions.show();
+                `;
+                
+                $('body').append(modalHtml);
+                $('#journalText').focus();
+                
+                $('#saveJournalBtn').on('click', () => {
+                    const date = $('#journalDate').val();
+                    const time = $('#journalTime').val();
+                    const text = $('#journalText').val();
+                    
+                    if (text.trim()) {
+                        const newEntry = AppModel.addJournalEntry(date, time, text);
+                        if (newEntry) {
+                            $('#journalModal').remove();
+                            this.switchView('journal');
+                            setTimeout(() => {
+                                AppView.highlightItem(newEntry.id, 'journal');
+                            }, 100);
+                        }
+                    } else {
+                        alert('Запись не может быть пустой');
+                    }
+                });
+                
+                $('#cancelJournalBtn').on('click', () => $('#journalModal').remove());
+            },
             
-            $('.global-suggestion-item').off('click').on('click', function() {
-                const entryId = $(this).data('entry-id');
-                if (entryId) {
+            openEditJournalModal: function(entryId) {
+                const entry = AppModel.journalEntries.find(e => e.id == entryId);
+                if (!entry) return;
+                
+                const entryDate = entry.date;
+                const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                
+                const modalHtml = `
+                    <div id="editJournalModal" class="modal">
+                        <div class="modal__content">
+                            <div class="modal__title">Редактировать запись</div>
+                            <input type="date" id="editJournalDate" class="modal__input" value="${entryDate}">
+                            <input type="time" id="editJournalTime" class="modal__input" value="${entryTime}">
+                            <textarea id="editJournalText" class="modal__input" rows="4">${entry.text}</textarea>
+                            <div class="modal__buttons">
+                                <button class="modal__btn" id="deleteJournalBtn" style="background: #ffebee; color: #d32f2f;">Удалить</button>
+                                <button class="modal__btn" id="cancelEditBtn">Отмена</button>
+                                <button class="modal__btn modal__btn--primary" id="updateJournalBtn">Сохранить</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('body').append(modalHtml);
+                
+                $('#updateJournalBtn').on('click', () => {
+                    const date = $('#editJournalDate').val();
+                    const time = $('#editJournalTime').val();
+                    const text = $('#editJournalText').val();
+                    
+                    if (text.trim()) {
+                        AppModel.updateJournalEntry(entryId, date, time, text);
+                        $('#editJournalModal').remove();
+                        AppView.render();
+                        setTimeout(() => {
+                            AppView.highlightItem(entryId, 'journal');
+                        }, 100);
+                    } else {
+                        alert('Запись не может быть пустой');
+                    }
+                });
+                
+                $('#deleteJournalBtn').on('click', () => {
+                    if (confirm('Удалить эту запись?')) {
+                        AppModel.deleteJournalEntry(entryId);
+                        $('#editJournalModal').remove();
+                        AppView.render();
+                    }
+                });
+                
+                $('#cancelEditBtn').on('click', () => $('#editJournalModal').remove());
+            },
+            
+            handleGlobalSearch: function(query) {
+                const $suggestions = $('#globalSuggestions');
+                if (!query.trim()) {
+                    $suggestions.hide();
+                    return;
+                }
+                
+                const results = AppModel.searchAll(query);
+                if (results.length === 0) {
+                    $suggestions.html('<div class="suggestion-item">Ничего не найдено</div>').show();
+                    return;
+                }
+                
+                $suggestions.empty();
+                results.slice(0, 10).forEach(item => {
+                    const typeLabel = item.type === 'journal' ? '📝 Запись' : '📇 Карточка';
+                    $suggestions.append(`
+                        <div class="suggestion-item" data-id="${item.id}" data-type="${item.type}">
+                            <div>
+                                <span class="suggestion-type ${item.type}">${typeLabel}</span>
+                                <strong>${this.escapeHtml(item.title)}</strong>
+                            </div>
+                            <div style="font-size: 11px; color: #888; margin-top: 4px;">${item.date}</div>
+                        </div>
+                    `);
+                });
+                $suggestions.show();
+                
+                $('.suggestion-item').off('click').on('click', function() {
+                    const id = $(this).data('id');
+                    const type = $(this).data('type');
                     $('#globalSearchInput').val('');
                     $('#globalSuggestions').hide();
-                    JournalView.highlightEntryById(entryId);
-                }
-            });
-        },
-        
-        updateGlobalSearch: function() {
-            const currentQuery = $('#globalSearchInput').val();
-            if (currentQuery && currentQuery.trim()) {
-                this.handleGlobalSearch(currentQuery);
-            } else {
-                $('#globalSuggestions').hide();
+                    
+                    if (type === 'journal') {
+                        AppController.switchView('journal');
+                        setTimeout(() => AppView.highlightItem(id, 'journal'), 100);
+                    } else {
+                        AppController.switchToCard(id);
+                    }
+                });
+            },
+            
+            escapeHtml: function(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                });
             }
-        }
-    };
-    
-    $(document).ready(() => {
-        JournalController.init();
-    });
-</script>
+        };
+        
+        $(document).ready(() => {
+            AppController.init();
+        });
+    </script>
 </body>
 </html>
