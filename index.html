@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Ежедневник | Записи по датам</title>
+    <title>Ежедневник</title>
     <script src="vendor/js/jquery-3.6.0.min.js"></script>
     <script src="vendor/js/ejs.min.js"></script>
     <style>
@@ -18,8 +18,8 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #f5f5f5;
             min-height: 100vh;
-            padding: 12px;
-            padding-bottom: 100px;
+            padding: 16px;
+            padding-bottom: 90px;
             line-height: 1.5;
         }
 
@@ -29,78 +29,26 @@
             margin: 0 auto;
         }
 
-        /* Шапка */
-        .journal__header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 8px;
-        }
-
-        .journal__title {
-            font-size: 28px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .journal__subtitle {
-            font-size: 13px;
-            color: #888;
-        }
-
-        /* Кнопки управления */
-        .journal__controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .button {
-            padding: 8px 16px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            background: #e0e0e0;
-            color: #333;
-            transition: all 0.1s;
-        }
-
-        .button:active {
-            background: #d0d0d0;
-            transform: scale(0.98);
-        }
-
-        .button--danger {
-            background: #fff;
-            border-color: #ffccc7;
-            color: #d4380d;
-        }
-
-        .button--danger:active {
-            background: #fff2f0;
-        }
-
         /* Глобальный поиск */
         .global-search {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .global-search__input {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
             background: #fff;
+            transition: all 0.2s;
         }
 
         .global-search__input:focus {
             outline: none;
             border-color: #999;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
         }
 
         .global-search__suggestions {
@@ -109,21 +57,22 @@
             left: 0;
             right: 0;
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
             max-height: 300px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
-            margin-top: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .global-suggestion-item {
-            padding: 10px 12px;
+            padding: 12px 16px;
             cursor: pointer;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 13px;
+            font-size: 14px;
+            transition: background 0.1s;
         }
 
         .global-suggestion-item:last-child {
@@ -131,80 +80,48 @@
         }
 
         .global-suggestion-item:active {
-            background: #f5f5f5;
+            background: #f9f9f9;
         }
 
         .global-suggestion-item strong {
             background: #fff3e0;
+            font-weight: 600;
         }
 
         /* Контейнер с днями */
         .days-container {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 24px;
         }
 
         /* Группа дня */
         .day-group {
             background: #fff;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e8e8e8;
         }
 
+        /* Заголовок даты - по центру */
         .day-group__header {
+            padding: 16px 20px;
+            text-align: center;
             background: #fafafa;
-            padding: 12px 16px;
             border-bottom: 1px solid #efefef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
         }
 
         .day-group__date {
             font-weight: 600;
-            font-size: 16px;
+            font-size: 18px;
             color: #333;
         }
 
         .day-group__weekday {
             font-size: 13px;
             color: #888;
-            font-weight: normal;
-            margin-left: 6px;
-        }
-
-        .day-group__count {
-            font-size: 12px;
-            color: #999;
-            background: #f0f0f0;
-            padding: 2px 8px;
-            border-radius: 20px;
-        }
-
-        .day-group__actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .action-button {
-            background: none;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: #888;
-            transition: all 0.1s;
-        }
-
-        .action-button:active {
-            background: #e8e8e8;
+            margin-top: 4px;
         }
 
         /* Список записей */
@@ -213,15 +130,20 @@
             flex-direction: column;
         }
 
-        /* Отдельная запись */
+        /* Отдельная запись - кликабельна для редактирования */
         .entry-item {
-            padding: 12px 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid #f0f0f0;
             transition: background 0.2s;
+            cursor: pointer;
         }
 
         .entry-item:last-child {
             border-bottom: none;
+        }
+
+        .entry-item:active {
+            background: #f9f9f9;
         }
 
         .entry-item.highlight {
@@ -235,180 +157,23 @@
         }
 
         .entry-item__content {
-            font-size: 14px;
-            line-height: 1.45;
+            font-size: 15px;
+            line-height: 1.5;
             color: #333;
             word-break: break-word;
             white-space: pre-wrap;
-            margin-bottom: 8px;
         }
 
         .entry-item__footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-top: 8px;
             font-size: 11px;
-            color: #aaa;
-        }
-
-        .entry-item__time {
             color: #bbb;
-        }
-
-        .entry-item__actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .entry-action {
-            background: none;
-            border: none;
-            font-size: 12px;
-            cursor: pointer;
-            color: #999;
-            padding: 4px 6px;
-            border-radius: 4px;
-        }
-
-        .entry-action:active {
-            background: #f0f0f0;
-        }
-
-        .entry-action--delete {
-            color: #d4380d;
-        }
-
-        /* Фиксированная панель добавления */
-        .fixed-add-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.98);
-            border-top: 1px solid #e5e5e5;
-            padding: 12px 16px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
-            z-index: 1000;
-        }
-
-        .fixed-add-bar__container {
-            max-width: 700px;
-            margin: 0 auto;
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .fixed-add-bar__textarea {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: none;
-            background: #fff;
-            max-height: 100px;
-            line-height: 1.4;
-        }
-
-        .fixed-add-bar__textarea:focus {
-            outline: none;
-            border-color: #999;
-        }
-
-        .fixed-add-bar__button {
-            background: #e0e0e0;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            padding: 8px 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            height: 42px;
-            white-space: nowrap;
-        }
-
-        .fixed-add-bar__button:active {
-            background: #d0d0d0;
-            transform: scale(0.97);
-        }
-
-        /* Кнопка с именем */
-        .user-name-button {
-            position: fixed;
-            bottom: 80px;
-            right: 16px;
-            background: #e0e0e0;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            z-index: 1000;
-            color: #333;
-            white-space: nowrap;
-        }
-
-        .user-name-button:active {
-            background: #d0d0d0;
-        }
-
-        /* Модальное окно имени */
-        .name-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
-
-        .name-modal__content {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 340px;
-            text-align: center;
-        }
-
-        .name-modal__title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .name-modal__input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
-
-        .name-modal__button {
-            width: 100%;
-            padding: 10px;
-            background: #e0e0e0;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
         }
 
         /* Пустое состояние */
         .empty-state {
             text-align: center;
-            padding: 48px 20px;
+            padding: 60px 20px;
             background: #fff;
             border-radius: 16px;
             color: #aaa;
@@ -419,94 +184,214 @@
             margin-bottom: 12px;
         }
 
+        .empty-state__text {
+            font-size: 14px;
+        }
+
+        /* Плавающая кнопка добавления - по центру внизу */
+        .floating-add-button {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            background: #333;
+            border: none;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .floating-add-button:active {
+            transform: translateX(-50%) scale(0.94);
+            background: #1a1a1a;
+        }
+
+        .floating-add-button__icon {
+            font-size: 28px;
+            font-weight: 300;
+            color: white;
+            line-height: 1;
+        }
+
+        /* Полноэкранное модальное окно */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.2s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .fullscreen-modal__header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #efefef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+        }
+
+        .fullscreen-modal__title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .fullscreen-modal__close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+        }
+
+        .fullscreen-modal__close:active {
+            background: #f0f0f0;
+        }
+
+        .fullscreen-modal__content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fullscreen-modal__textarea {
+            width: 100%;
+            flex: 1;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            background: #fafafa;
+            line-height: 1.5;
+        }
+
+        .fullscreen-modal__textarea:focus {
+            outline: none;
+            border-color: #999;
+            background: #fff;
+        }
+
+        .fullscreen-modal__footer {
+            padding: 16px 20px;
+            border-top: 1px solid #efefef;
+            display: flex;
+            gap: 12px;
+        }
+
+        .fullscreen-modal__button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .fullscreen-modal__button--save {
+            background: #333;
+            color: white;
+        }
+
+        .fullscreen-modal__button--save:active {
+            background: #1a1a1a;
+            transform: scale(0.98);
+        }
+
+        .fullscreen-modal__button--delete {
+            background: #fff;
+            border: 1px solid #ffccc7;
+            color: #d4380d;
+        }
+
+        .fullscreen-modal__button--delete:active {
+            background: #fff2f0;
+            transform: scale(0.98);
+        }
+
         /* Адаптив */
         @media (max-width: 600px) {
             body {
-                padding: 8px;
+                padding: 12px;
                 padding-bottom: 90px;
             }
             
-            .day-group__header {
-                flex-direction: column;
-                align-items: flex-start;
+            .entry-item {
+                padding: 14px 16px;
             }
             
-            .day-group__actions {
-                align-self: flex-end;
+            .day-group__header {
+                padding: 12px 16px;
+            }
+            
+            .day-group__date {
+                font-size: 16px;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- Модальное окно имени -->
-<div class="name-modal" id="nameModal" style="display: none;">
-    <div class="name-modal__content">
-        <div class="name-modal__title">Введите ваше имя</div>
-        <input type="text" class="name-modal__input" id="userNameInput" placeholder="Имя" maxlength="50">
-        <button class="name-modal__button" id="saveUserNameBtn">Сохранить</button>
-    </div>
-</div>
-
-<!-- Кнопка с именем -->
-<button class="user-name-button" id="userNameButton" style="display: none;">
-    👤 <span id="userNameDisplay"></span>
-</button>
-
 <div class="journal">
-    <div class="journal__header">
-        <h1 class="journal__title">📔 Ежедневник</h1>
-        <p class="journal__subtitle">Записи по дням — от первых к последним</p>
-    </div>
-
-    <div class="journal__controls">
-        <button class="button" id="scrollToTodayBtn">📅 Сегодня</button>
-        <button class="button button--danger" id="deleteAllBtn">🗑 Уничтожить все</button>
-    </div>
-
     <!-- Глобальный поиск -->
     <div class="global-search">
         <input type="text" id="globalSearchInput" class="global-search__input" 
-               placeholder="Поиск записей..." autocomplete="off">
+               placeholder="🔍 Поиск записей..." autocomplete="off">
         <div id="globalSuggestions" class="global-search__suggestions"></div>
     </div>
 
     <div class="days-container" id="daysContainer"></div>
 </div>
 
-<!-- Фиксированная панель добавления -->
-<div class="fixed-add-bar">
-    <div class="fixed-add-bar__container">
-        <textarea id="newEntryText" class="fixed-add-bar__textarea" 
-                  rows="1" placeholder="Новая запись на сегодня..."></textarea>
-        <button id="addEntryBtn" class="fixed-add-bar__button">➕ Добавить</button>
-    </div>
-</div>
+<!-- Плавающая кнопка добавления -->
+<button class="floating-add-button" id="addButton">
+    <span class="floating-add-button__icon">+</span>
+</button>
 
 <!-- EJS шаблоны -->
 <script type="text/ejs" id="dayGroupTemplate">
     <div class="day-group" data-date="<%= date %>">
         <div class="day-group__header">
-            <div>
-                <span class="day-group__date"><%= formattedDate %></span>
-                <span class="day-group__weekday"><%= weekday %></span>
-            </div>
-            <div class="day-group__actions">
-                <span class="day-group__count"><%= entries.length %> зап.</span>
-                <button class="action-button delete-day-btn" data-date="<%= date %>">🗑 день</button>
-            </div>
+            <div class="day-group__date"><%= formattedDate %></div>
+            <div class="day-group__weekday"><%= weekday %></div>
         </div>
         <div class="entries-list">
             <% entries.forEach(function(entry) { %>
                 <div class="entry-item" data-entry-id="<%= entry.id %>">
                     <div class="entry-item__content"><%= entry.text %></div>
-                    <div class="entry-item__footer">
-                        <span class="entry-item__time"><%= entry.time %></span>
-                        <div class="entry-item__actions">
-                            <button class="entry-action entry-edit" data-id="<%= entry.id %>">✏️</button>
-                            <button class="entry-action entry-action--delete entry-delete" data-id="<%= entry.id %>">🗑</button>
-                        </div>
-                    </div>
+                    <div class="entry-item__footer"><%= entry.time %></div>
                 </div>
             <% }); %>
         </div>
@@ -516,20 +401,20 @@
 <script type="text/ejs" id="emptyTemplate">
     <div class="empty-state">
         <div class="empty-state__icon">📭</div>
-        <div>Нет записей</div>
-        <div style="font-size: 13px; margin-top: 8px;">Напишите что-нибудь в поле внизу</div>
+        <div class="empty-state__text">Нет записей</div>
+        <div class="empty-state__text" style="font-size: 13px; margin-top: 8px;">Нажмите + внизу, чтобы добавить</div>
     </div>
 </script>
 
 <script>
     // -------------------- Модель данных --------------------
     const JournalModel = {
-        entries: [], // { id, date, text, createdAt }
+        entries: [],
         
         generateId: () => Date.now() + Math.random() * 10000,
         
         load: function() {
-            const saved = localStorage.getItem('journal_entries_v2');
+            const saved = localStorage.getItem('journal_entries_v3');
             if (saved) {
                 try {
                     this.entries = JSON.parse(saved);
@@ -546,19 +431,19 @@
                 this.entries.push({
                     id: this.generateId(),
                     date: twoDaysAgo,
-                    text: "📝 Первая запись! Здесь можно вести дневник. Записи группируются по датам.",
+                    text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.",
                     createdAt: new Date(Date.now() - 2*86400000).toISOString()
                 });
                 this.entries.push({
                     id: this.generateId(),
                     date: yesterday,
-                    text: "✨ Вчерашняя запись. Вы можете редактировать или удалять любую запись.",
+                    text: "Вчерашняя запись. Нажмите на любую запись, чтобы отредактировать или удалить её.",
                     createdAt: new Date(Date.now() - 86400000).toISOString()
                 });
                 this.entries.push({
                     id: this.generateId(),
                     date: today,
-                    text: "🌟 Сегодняшний день. Добавляйте новые мысли в поле внизу!",
+                    text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.",
                     createdAt: new Date().toISOString()
                 });
                 this.save();
@@ -566,7 +451,6 @@
         },
         
         sortEntries: function() {
-            // Сортировка по дате (старые сверху), потом по времени создания (старые записи сверху)
             this.entries.sort((a, b) => {
                 if (a.date !== b.date) return a.date.localeCompare(b.date);
                 return new Date(a.createdAt) - new Date(b.createdAt);
@@ -575,7 +459,7 @@
         
         save: function() {
             this.sortEntries();
-            localStorage.setItem('journal_entries_v2', JSON.stringify(this.entries));
+            localStorage.setItem('journal_entries_v3', JSON.stringify(this.entries));
         },
         
         getGroupedEntries: function() {
@@ -589,7 +473,6 @@
             
             const result = [];
             for (let [date, entries] of groups.entries()) {
-                // Форматируем каждую запись для отображения
                 const formattedEntries = entries.map(entry => ({
                     ...entry,
                     time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -604,7 +487,6 @@
                 });
             }
             
-            // Сортируем по дате от старых к новым
             result.sort((a, b) => a.date.localeCompare(b.date));
             return result;
         },
@@ -649,11 +531,6 @@
             return true;
         },
         
-        deleteEntriesByDate: function(date) {
-            this.entries = this.entries.filter(e => e.date !== date);
-            this.save();
-        },
-        
         searchEntries: function(query) {
             if (!query || !query.trim()) return [];
             const lowerQuery = query.toLowerCase().trim();
@@ -667,6 +544,10 @@
         
         getTodayDate: function() {
             return new Date().toISOString().slice(0,10);
+        },
+        
+        getEntryById: function(id) {
+            return this.entries.find(e => e.id == id);
         }
     };
     
@@ -692,42 +573,12 @@
         },
         
         bindEvents: function() {
-            // Удаление записи
-            $('.entry-delete').off('click').on('click', function(e) {
+            // Клик по записи для редактирования
+            $('.entry-item').off('click').on('click', function(e) {
                 e.stopPropagation();
-                const id = $(this).data('id');
-                if (confirm('Удалить эту запись?')) {
-                    JournalModel.deleteEntry(id);
-                    JournalView.render();
-                    JournalController.updateGlobalSearch();
-                }
-            });
-            
-            // Редактирование записи
-            $('.entry-edit').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const id = $(this).data('id');
-                const entry = JournalModel.entries.find(e => e.id == id);
-                if (entry) {
-                    const newText = prompt('Редактировать запись:', entry.text);
-                    if (newText !== null && newText.trim()) {
-                        JournalModel.updateEntry(id, newText);
-                        JournalView.render();
-                        JournalController.updateGlobalSearch();
-                    } else if (newText === '') {
-                        alert('Запись не может быть пустой');
-                    }
-                }
-            });
-            
-            // Удаление целого дня
-            $('.delete-day-btn').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const date = $(this).data('date');
-                if (confirm(`Удалить все записи за ${date}?`)) {
-                    JournalModel.deleteEntriesByDate(date);
-                    JournalView.render();
-                    JournalController.updateGlobalSearch();
+                const entryId = $(this).data('entry-id');
+                if (entryId) {
+                    JournalController.openEditModal(entryId);
                 }
             });
         },
@@ -739,20 +590,6 @@
                 setTimeout(() => $entry.removeClass('highlight'), 1000);
                 $entry.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-        },
-        
-        scrollToToday: function() {
-            const today = JournalModel.getTodayDate();
-            const $dayGroup = $(`.day-group[data-date="${today}"]`);
-            if ($dayGroup.length) {
-                $dayGroup.get(0).scrollIntoView({ behavior: 'smooth', block: 'start' });
-                $dayGroup.css('box-shadow', '0 0 0 2px #ffb347');
-                setTimeout(() => {
-                    $dayGroup.css('box-shadow', '');
-                }, 1500);
-            } else {
-                alert('Сегодняшних записей нет. Добавьте первую!');
-            }
         }
     };
     
@@ -762,39 +599,12 @@
             JournalModel.load();
             JournalView.render();
             this.bindEvents();
-            this.initUser();
             this.updateGlobalSearch();
-            
-            // Авто-фокус и авто-расширение textarea
-            $('#newEntryText').focus();
-            $('#newEntryText').on('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-            });
         },
         
         bindEvents: function() {
-            // Добавление записи
-            $('#addEntryBtn').on('click', () => this.addNewEntry());
-            $('#newEntryText').on('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    this.addNewEntry();
-                }
-            });
-            
-            // Скролл к сегодня
-            $('#scrollToTodayBtn').on('click', () => JournalView.scrollToToday());
-            
-            // Удалить всё
-            $('#deleteAllBtn').on('click', () => {
-                if (JournalModel.entries.length === 0) return;
-                if (confirm('Уничтожить все записи? Это действие нельзя отменить.')) {
-                    JournalModel.deleteAllEntries();
-                    JournalView.render();
-                    this.updateGlobalSearch();
-                }
-            });
+            // Кнопка добавления
+            $('#addButton').on('click', () => this.openAddModal());
             
             // Глобальный поиск
             $('#globalSearchInput').on('input', (e) => this.handleGlobalSearch(e.target.value));
@@ -805,22 +615,133 @@
             });
         },
         
-        addNewEntry: function() {
-            const text = $('#newEntryText').val().trim();
-            if (!text) {
-                alert('Напишите текст записи');
-                return;
+        openAddModal: function() {
+            this.showFullscreenModal({
+                title: 'Новая запись',
+                placeholder: 'Напишите что-нибудь...',
+                onSave: (text) => {
+                    if (text && text.trim()) {
+                        const today = JournalModel.getTodayDate();
+                        const newEntry = JournalModel.addEntry(today, text);
+                        if (newEntry) {
+                            JournalView.render();
+                            this.updateGlobalSearch();
+                            setTimeout(() => {
+                                JournalView.highlightEntryById(newEntry.id);
+                            }, 100);
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        },
+        
+        openEditModal: function(entryId) {
+            const entry = JournalModel.getEntryById(entryId);
+            if (!entry) return;
+            
+            this.showFullscreenModal({
+                title: 'Редактировать запись',
+                placeholder: 'Текст записи...',
+                initialText: entry.text,
+                showDelete: true,
+                onSave: (text) => {
+                    if (text && text.trim()) {
+                        JournalModel.updateEntry(entryId, text);
+                        JournalView.render();
+                        this.updateGlobalSearch();
+                        setTimeout(() => {
+                            JournalView.highlightEntryById(entryId);
+                        }, 100);
+                        return true;
+                    }
+                    return false;
+                },
+                onDelete: () => {
+                    if (confirm('Удалить эту запись?')) {
+                        JournalModel.deleteEntry(entryId);
+                        JournalView.render();
+                        this.updateGlobalSearch();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        },
+        
+        showFullscreenModal: function(options) {
+            const modalId = 'fullscreenModal_' + Date.now();
+            const modalHtml = `
+                <div class="fullscreen-modal" id="${modalId}">
+                    <div class="fullscreen-modal__header">
+                        <div class="fullscreen-modal__title">${options.title}</div>
+                        <button class="fullscreen-modal__close">✕</button>
+                    </div>
+                    <div class="fullscreen-modal__content">
+                        <textarea class="fullscreen-modal__textarea" 
+                                  placeholder="${options.placeholder || ''}">${options.initialText || ''}</textarea>
+                    </div>
+                    <div class="fullscreen-modal__footer">
+                        ${options.showDelete ? '<button class="fullscreen-modal__button fullscreen-modal__button--delete">🗑 Удалить</button>' : ''}
+                        <button class="fullscreen-modal__button fullscreen-modal__button--save">💾 Сохранить</button>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(modalHtml);
+            const $modal = $('#' + modalId);
+            const $textarea = $modal.find('.fullscreen-modal__textarea');
+            
+            // Автофокус
+            setTimeout(() => $textarea.focus(), 100);
+            
+            // Авто-высота
+            $textarea.on('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, window.innerHeight - 200) + 'px';
+            });
+            
+            // Закрытие
+            const closeModal = () => {
+                $modal.remove();
+            };
+            
+            $modal.find('.fullscreen-modal__close').on('click', closeModal);
+            
+            // Сохранение
+            $modal.find('.fullscreen-modal__button--save').on('click', () => {
+                const text = $textarea.val();
+                if (options.onSave(text)) {
+                    closeModal();
+                } else if (!text.trim()) {
+                    alert('Запись не может быть пустой');
+                }
+            });
+            
+            // Удаление (если есть)
+            if (options.showDelete) {
+                $modal.find('.fullscreen-modal__button--delete').on('click', () => {
+                    if (options.onDelete()) {
+                        closeModal();
+                    }
+                });
             }
-            const today = JournalModel.getTodayDate();
-            const newEntry = JournalModel.addEntry(today, text);
-            if (newEntry) {
-                $('#newEntryText').val('').trigger('input');
-                JournalView.render();
-                this.updateGlobalSearch();
-                setTimeout(() => {
-                    JournalView.highlightEntryById(newEntry.id);
-                }, 100);
-            }
+            
+            // Закрытие по ESC
+            $(document).on('keydown.' + modalId, (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    $(document).off('keydown.' + modalId);
+                }
+            });
+            
+            // Закрытие по клику вне (но так как полноэкранное, только если на фон)
+            $modal.on('click', (e) => {
+                if (e.target === $modal[0]) {
+                    closeModal();
+                }
+            });
         },
         
         handleGlobalSearch: function(query) {
@@ -838,7 +759,7 @@
             
             $suggestions.empty();
             results.slice(0, 8).forEach(entry => {
-                let displayText = entry.text.length > 70 ? entry.text.slice(0, 70) + '…' : entry.text;
+                let displayText = entry.text.length > 80 ? entry.text.slice(0, 80) + '…' : entry.text;
                 const lowerQuery = query.toLowerCase();
                 const index = displayText.toLowerCase().indexOf(lowerQuery);
                 if (index !== -1) {
@@ -874,43 +795,6 @@
             } else {
                 $('#globalSuggestions').hide();
             }
-        },
-        
-        initUser: function() {
-            const UserKey = 'journal_user_name_v2';
-            const $modal = $('#nameModal');
-            const $userBtn = $('#userNameButton');
-            const $display = $('#userNameDisplay');
-            
-            const savedName = localStorage.getItem(UserKey);
-            if (savedName && savedName.trim()) {
-                $display.text(savedName);
-                $userBtn.show();
-                $modal.hide();
-            } else {
-                $modal.show();
-                $('#userNameInput').focus();
-            }
-            
-            $('#saveUserNameBtn').on('click', function() {
-                const name = $('#userNameInput').val().trim();
-                if (name) {
-                    localStorage.setItem(UserKey, name);
-                    $display.text(name);
-                    $userBtn.show();
-                    $modal.hide();
-                } else {
-                    alert('Введите имя');
-                }
-            });
-            
-            $('#userNameInput').on('keypress', function(e) {
-                if (e.which === 13) $('#saveUserNameBtn').click();
-            });
-            
-            $userBtn.on('click', function() {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
         }
     };
     
