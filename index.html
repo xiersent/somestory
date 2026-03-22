@@ -83,11 +83,6 @@
             background: #f9f9f9;
         }
 
-        .global-suggestion-item strong {
-            background: #fff3e0;
-            font-weight: 600;
-        }
-
         /* Контейнер с днями */
         .days-container {
             display: flex;
@@ -179,11 +174,6 @@
             color: #aaa;
         }
 
-        .empty-state__icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
         .empty-state__text {
             font-size: 14px;
         }
@@ -206,18 +196,15 @@
             justify-content: center;
             transition: all 0.2s ease;
             z-index: 1000;
+            font-size: 28px;
+            font-weight: 400;
+            color: white;
+            line-height: 1;
         }
 
         .floating-add-button:active {
             transform: translateX(-50%) scale(0.94);
             background: #1a1a1a;
-        }
-
-        .floating-add-button__icon {
-            font-size: 28px;
-            font-weight: 300;
-            color: white;
-            line-height: 1;
         }
 
         /* Полноэкранное модальное окно */
@@ -244,54 +231,107 @@
         }
 
         .fullscreen-modal__header {
-            padding: 16px 20px;
+            padding: 20px 20px 16px 20px;
             border-bottom: 1px solid #efefef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             background: #fff;
         }
 
         .fullscreen-modal__title {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 600;
             color: #333;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .fullscreen-modal__close {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #999;
-            width: 40px;
-            height: 40px;
+        .fullscreen-modal__actions {
             display: flex;
-            align-items: center;
+            gap: 12px;
             justify-content: center;
-            border-radius: 20px;
+            flex-wrap: wrap;
         }
 
-        .fullscreen-modal__close:active {
-            background: #f0f0f0;
+        .fullscreen-modal__button {
+            flex: 1;
+            max-width: 140px;
+            padding: 10px 16px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s;
+            background: #fff;
+            color: #333;
+            text-align: center;
+        }
+
+        .fullscreen-modal__button:active {
+            transform: scale(0.98);
+            background: #f5f5f5;
+        }
+
+        .fullscreen-modal__button--save {
+            background: #333;
+            border-color: #333;
+            color: white;
+        }
+
+        .fullscreen-modal__button--save:active {
+            background: #1a1a1a;
+        }
+
+        .fullscreen-modal__button--delete {
+            border-color: #ffccc7;
+            color: #d4380d;
+        }
+
+        .fullscreen-modal__button--delete:active {
+            background: #fff2f0;
         }
 
         .fullscreen-modal__content {
             flex: 1;
-            padding: 20px;
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        /* Дата и время в одну строку */
+        .fullscreen-modal__datetime {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .fullscreen-modal__datetime-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        .fullscreen-modal__datetime-input:focus {
+            outline: none;
+            border-color: #999;
+            background: #fff;
         }
 
         .fullscreen-modal__textarea {
             width: 100%;
-            flex: 1;
-            padding: 16px;
+            min-height: 200px;
+            padding: 14px;
             border: 1px solid #e0e0e0;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-family: inherit;
-            resize: none;
+            resize: vertical;
             background: #fafafa;
             line-height: 1.5;
         }
@@ -300,45 +340,6 @@
             outline: none;
             border-color: #999;
             background: #fff;
-        }
-
-        .fullscreen-modal__footer {
-            padding: 16px 20px;
-            border-top: 1px solid #efefef;
-            display: flex;
-            gap: 12px;
-        }
-
-        .fullscreen-modal__button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.1s;
-        }
-
-        .fullscreen-modal__button--save {
-            background: #333;
-            color: white;
-        }
-
-        .fullscreen-modal__button--save:active {
-            background: #1a1a1a;
-            transform: scale(0.98);
-        }
-
-        .fullscreen-modal__button--delete {
-            background: #fff;
-            border: 1px solid #ffccc7;
-            color: #d4380d;
-        }
-
-        .fullscreen-modal__button--delete:active {
-            background: #fff2f0;
-            transform: scale(0.98);
         }
 
         /* Адаптив */
@@ -359,6 +360,21 @@
             .day-group__date {
                 font-size: 16px;
             }
+            
+            .fullscreen-modal__actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .fullscreen-modal__button {
+                max-width: none;
+                width: 100%;
+            }
+            
+            .fullscreen-modal__datetime {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -368,7 +384,7 @@
     <!-- Глобальный поиск -->
     <div class="global-search">
         <input type="text" id="globalSearchInput" class="global-search__input" 
-               placeholder="🔍 Поиск записей..." autocomplete="off">
+               placeholder="Поиск записей..." autocomplete="off">
         <div id="globalSuggestions" class="global-search__suggestions"></div>
     </div>
 
@@ -376,9 +392,7 @@
 </div>
 
 <!-- Плавающая кнопка добавления -->
-<button class="floating-add-button" id="addButton">
-    <span class="floating-add-button__icon">+</span>
-</button>
+<button class="floating-add-button" id="addButton">+</button>
 
 <!-- EJS шаблоны -->
 <script type="text/ejs" id="dayGroupTemplate">
@@ -400,7 +414,6 @@
 
 <script type="text/ejs" id="emptyTemplate">
     <div class="empty-state">
-        <div class="empty-state__icon">📭</div>
         <div class="empty-state__text">Нет записей</div>
         <div class="empty-state__text" style="font-size: 13px; margin-top: 8px;">Нажмите + внизу, чтобы добавить</div>
     </div>
@@ -414,7 +427,7 @@
         generateId: () => Date.now() + Math.random() * 10000,
         
         load: function() {
-            const saved = localStorage.getItem('journal_entries_v3');
+            const saved = localStorage.getItem('journal_entries_v5');
             if (saved) {
                 try {
                     this.entries = JSON.parse(saved);
@@ -424,27 +437,30 @@
             
             // Добавляем демо-записи если пусто
             if (this.entries.length === 0) {
-                const today = new Date().toISOString().slice(0,10);
-                const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-                const twoDaysAgo = new Date(Date.now() - 2*86400000).toISOString().slice(0,10);
+                const today = new Date();
+                const todayStr = today.toISOString().slice(0,10);
+                const yesterday = new Date(Date.now() - 86400000);
+                const yesterdayStr = yesterday.toISOString().slice(0,10);
+                const twoDaysAgo = new Date(Date.now() - 2*86400000);
+                const twoDaysAgoStr = twoDaysAgo.toISOString().slice(0,10);
                 
                 this.entries.push({
                     id: this.generateId(),
-                    date: twoDaysAgo,
+                    date: twoDaysAgoStr,
                     text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.",
-                    createdAt: new Date(Date.now() - 2*86400000).toISOString()
+                    createdAt: twoDaysAgo.toISOString()
                 });
                 this.entries.push({
                     id: this.generateId(),
-                    date: yesterday,
+                    date: yesterdayStr,
                     text: "Вчерашняя запись. Нажмите на любую запись, чтобы отредактировать или удалить её.",
-                    createdAt: new Date(Date.now() - 86400000).toISOString()
+                    createdAt: yesterday.toISOString()
                 });
                 this.entries.push({
                     id: this.generateId(),
-                    date: today,
+                    date: todayStr,
                     text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.",
-                    createdAt: new Date().toISOString()
+                    createdAt: today.toISOString()
                 });
                 this.save();
             }
@@ -459,7 +475,7 @@
         
         save: function() {
             this.sortEntries();
-            localStorage.setItem('journal_entries_v3', JSON.stringify(this.entries));
+            localStorage.setItem('journal_entries_v5', JSON.stringify(this.entries));
         },
         
         getGroupedEntries: function() {
@@ -491,23 +507,33 @@
             return result;
         },
         
-        addEntry: function(date, text) {
+        addEntry: function(date, time, text) {
             if (!text || !text.trim()) return null;
+            
+            // Создаем дату из выбранных даты и времени
+            const dateTimeStr = `${date}T${time}:00`;
+            const createdAt = new Date(dateTimeStr);
+            
             const newEntry = {
                 id: this.generateId(),
                 date: date,
                 text: text.trim(),
-                createdAt: new Date().toISOString()
+                createdAt: createdAt.toISOString()
             };
             this.entries.push(newEntry);
             this.save();
             return newEntry;
         },
         
-        updateEntry: function(id, newText) {
+        updateEntry: function(id, date, time, newText) {
             const entry = this.entries.find(e => e.id == id);
             if (entry && newText && newText.trim()) {
+                const dateTimeStr = `${date}T${time}:00`;
+                const createdAt = new Date(dateTimeStr);
+                
                 entry.text = newText.trim();
+                entry.date = date;
+                entry.createdAt = createdAt.toISOString();
                 this.save();
                 return true;
             }
@@ -524,13 +550,6 @@
             return false;
         },
         
-        deleteAllEntries: function() {
-            if (this.entries.length === 0) return false;
-            this.entries = [];
-            this.save();
-            return true;
-        },
-        
         searchEntries: function(query) {
             if (!query || !query.trim()) return [];
             const lowerQuery = query.toLowerCase().trim();
@@ -543,11 +562,28 @@
         },
         
         getTodayDate: function() {
-            return new Date().toISOString().slice(0,10);
+            const now = new Date();
+            return now.toISOString().slice(0,10);
+        },
+        
+        getCurrentTime: function() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
         },
         
         getEntryById: function(id) {
             return this.entries.find(e => e.id == id);
+        },
+        
+        scrollToBottom: function() {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
     };
     
@@ -600,6 +636,9 @@
             JournalView.render();
             this.bindEvents();
             this.updateGlobalSearch();
+            
+            // Скролл в самый низ при загрузке
+            JournalModel.scrollToBottom();
         },
         
         bindEvents: function() {
@@ -616,13 +655,18 @@
         },
         
         openAddModal: function() {
+            const today = JournalModel.getTodayDate();
+            const currentTime = JournalModel.getCurrentTime();
+            
             this.showFullscreenModal({
                 title: 'Новая запись',
-                placeholder: 'Напишите что-нибудь...',
-                onSave: (text) => {
+                dateValue: today,
+                timeValue: currentTime,
+                textValue: '',
+                showDelete: false,
+                onSave: (date, time, text) => {
                     if (text && text.trim()) {
-                        const today = JournalModel.getTodayDate();
-                        const newEntry = JournalModel.addEntry(today, text);
+                        const newEntry = JournalModel.addEntry(date, time, text);
                         if (newEntry) {
                             JournalView.render();
                             this.updateGlobalSearch();
@@ -641,14 +685,18 @@
             const entry = JournalModel.getEntryById(entryId);
             if (!entry) return;
             
+            const entryDate = entry.date;
+            const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            
             this.showFullscreenModal({
                 title: 'Редактировать запись',
-                placeholder: 'Текст записи...',
-                initialText: entry.text,
+                dateValue: entryDate,
+                timeValue: entryTime,
+                textValue: entry.text,
                 showDelete: true,
-                onSave: (text) => {
+                onSave: (date, time, text) => {
                     if (text && text.trim()) {
-                        JournalModel.updateEntry(entryId, text);
+                        JournalModel.updateEntry(entryId, date, time, text);
                         JournalView.render();
                         this.updateGlobalSearch();
                         setTimeout(() => {
@@ -659,7 +707,7 @@
                     return false;
                 },
                 onDelete: () => {
-                    if (confirm('Удалить эту запись?')) {
+                    if (confirm('Уничтожить эту запись?')) {
                         JournalModel.deleteEntry(entryId);
                         JournalView.render();
                         this.updateGlobalSearch();
@@ -672,47 +720,56 @@
         
         showFullscreenModal: function(options) {
             const modalId = 'fullscreenModal_' + Date.now();
+            
+            const deleteButtonHtml = options.showDelete ? 
+                '<button class="fullscreen-modal__button fullscreen-modal__button--delete" id="deleteBtn">Уничтожить</button>' : '';
+            
             const modalHtml = `
                 <div class="fullscreen-modal" id="${modalId}">
                     <div class="fullscreen-modal__header">
                         <div class="fullscreen-modal__title">${options.title}</div>
-                        <button class="fullscreen-modal__close">✕</button>
+                        <div class="fullscreen-modal__actions">
+                            <button class="fullscreen-modal__button fullscreen-modal__button--save" id="saveBtn">Сохранить</button>
+                            ${deleteButtonHtml}
+                            <button class="fullscreen-modal__button" id="cancelBtn">Отмена</button>
+                        </div>
                     </div>
                     <div class="fullscreen-modal__content">
-                        <textarea class="fullscreen-modal__textarea" 
-                                  placeholder="${options.placeholder || ''}">${options.initialText || ''}</textarea>
-                    </div>
-                    <div class="fullscreen-modal__footer">
-                        ${options.showDelete ? '<button class="fullscreen-modal__button fullscreen-modal__button--delete">🗑 Удалить</button>' : ''}
-                        <button class="fullscreen-modal__button fullscreen-modal__button--save">💾 Сохранить</button>
+                        <div class="fullscreen-modal__datetime">
+                            <input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}">
+                            <input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}">
+                        </div>
+                        <textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea>
                     </div>
                 </div>
             `;
             
             $('body').append(modalHtml);
             const $modal = $('#' + modalId);
-            const $textarea = $modal.find('.fullscreen-modal__textarea');
+            const $dateInput = $modal.find('#dateInput');
+            const $timeInput = $modal.find('#timeInput');
+            const $textInput = $modal.find('#textInput');
             
-            // Автофокус
-            setTimeout(() => $textarea.focus(), 100);
+            // Автофокус на текст
+            setTimeout(() => $textInput.focus(), 100);
             
-            // Авто-высота
-            $textarea.on('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, window.innerHeight - 200) + 'px';
-            });
-            
-            // Закрытие
+            // Закрытие модального окна
             const closeModal = () => {
                 $modal.remove();
             };
             
-            $modal.find('.fullscreen-modal__close').on('click', closeModal);
-            
             // Сохранение
-            $modal.find('.fullscreen-modal__button--save').on('click', () => {
-                const text = $textarea.val();
-                if (options.onSave(text)) {
+            $modal.find('#saveBtn').on('click', () => {
+                const date = $dateInput.val();
+                const time = $timeInput.val();
+                const text = $textInput.val();
+                
+                if (!date || !time) {
+                    alert('Заполните дату и время');
+                    return;
+                }
+                
+                if (options.onSave(date, time, text)) {
                     closeModal();
                 } else if (!text.trim()) {
                     alert('Запись не может быть пустой');
@@ -721,12 +778,15 @@
             
             // Удаление (если есть)
             if (options.showDelete) {
-                $modal.find('.fullscreen-modal__button--delete').on('click', () => {
+                $modal.find('#deleteBtn').on('click', () => {
                     if (options.onDelete()) {
                         closeModal();
                     }
                 });
             }
+            
+            // Отмена
+            $modal.find('#cancelBtn').on('click', closeModal);
             
             // Закрытие по ESC
             $(document).on('keydown.' + modalId, (e) => {
@@ -736,11 +796,21 @@
                 }
             });
             
-            // Закрытие по клику вне (но так как полноэкранное, только если на фон)
+            // Закрытие по клику на фон
             $modal.on('click', (e) => {
                 if (e.target === $modal[0]) {
                     closeModal();
                 }
+            });
+        },
+        
+        escapeHtml: function(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
         },
         
@@ -753,7 +823,7 @@
             
             const results = JournalModel.searchEntries(query);
             if (results.length === 0) {
-                $suggestions.html('<div class="global-suggestion-item">📭 Ничего не найдено</div>').show();
+                $suggestions.html('<div class="global-suggestion-item">Ничего не найдено</div>').show();
                 return;
             }
             
@@ -766,11 +836,11 @@
                     const before = displayText.slice(0, index);
                     const match = displayText.slice(index, index + query.length);
                     const after = displayText.slice(index + query.length);
-                    displayText = `${before}<strong>${match}</strong>${after}`;
+                    displayText = before + match + after;
                 }
                 $suggestions.append(`
                     <div class="global-suggestion-item" data-entry-id="${entry.id}">
-                        <div style="font-size: 11px; color: #888;">📅 ${entry.dateFormatted}</div>
+                        <div style="font-size: 11px; color: #888;">${entry.dateFormatted}</div>
                         <div>${displayText}</div>
                     </div>
                 `);
