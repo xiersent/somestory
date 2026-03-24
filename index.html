@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Планетаход + Ежедневник</title>
+    <title>Планетаход + Дневник</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ejs@3.1.8/ejs.min.js"></script>
     <style>
@@ -21,6 +21,7 @@
             padding: 16px;
             padding-bottom: 90px;
             line-height: 1.5;
+            overflow-y: scroll;
         }
 
         .app-container {
@@ -28,41 +29,29 @@
             margin: 0 auto;
         }
 
-        /* Общая шапка с переключателем */
-        .app-header {
+        .mode-switch-header {
             background: #fff;
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             border: 1px solid #e8e8e8;
-        }
-
-        .view-tabs {
-            display: flex;
-            gap: 8px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            background: #fff;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
+            text-align: center;
             cursor: pointer;
             transition: all 0.2s;
-            color: #666;
         }
 
-        .tab-btn.active {
-            background: #333;
-            border-color: #333;
-            color: white;
+        .mode-switch-header:active {
+            background: #f5f5f5;
         }
 
-        /* Глобальный поиск */
+        .mode-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            letter-spacing: -0.3px;
+        }
+
         .global-search {
             position: relative;
             margin-bottom: 20px;
@@ -135,7 +124,6 @@
             color: #7b1fa2;
         }
 
-        /* Контейнеры представлений */
         .view-container {
             display: none;
         }
@@ -144,7 +132,6 @@
             display: block;
         }
 
-        /* Стили дневника */
         .journal {
             width: 100%;
         }
@@ -234,7 +221,6 @@
             color: #aaa;
         }
 
-        /* Стили карточек */
         .cards-system {
             width: 100%;
         }
@@ -495,7 +481,6 @@
             display: inline-block;
         }
 
-        /* Плавающая кнопка */
         .floating-add-button {
             position: fixed;
             bottom: 24px;
@@ -523,30 +508,30 @@
             transform: translateX(-50%) scale(0.94);
         }
 
-        .create-menu {
+        .fixed-name-button {
             position: fixed;
-            bottom: 90px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            display: flex;
-            gap: 8px;
-            padding: 8px;
-            z-index: 1001;
-        }
-
-        .create-menu-btn {
-            padding: 10px 20px;
-            border: none;
-            background: #f5f5f5;
-            border-radius: 8px;
-            cursor: pointer;
+            background: #e0e0e0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            padding: 8px 20px;
             font-size: 14px;
+            cursor: pointer;
+            z-index: 1000;
+            text-align: center;
+            height: 40px;
+            white-space: nowrap;
+            min-width: 160px;
+            transition: all 0.2s;
         }
 
-        /* Модальное окно дневника */
+        .fixed-name-button:active {
+            transform: translateX(-50%) scale(0.96);
+        }
+
         .fullscreen-modal {
             position: fixed;
             top: 0;
@@ -655,7 +640,6 @@
             background: #fafafa;
         }
 
-        /* Модальное окно имени */
         .name-modal {
             position: fixed;
             top: 0;
@@ -701,26 +685,6 @@
             cursor: pointer;
         }
 
-        .fixed-name-button {
-            position: fixed;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #e0e0e0;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            padding: 8px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 1000;
-            text-align: center;
-            height: 40px;
-            white-space: nowrap;
-            min-width: 160px;
-            display: none;
-        }
-
         @media (max-width: 600px) {
             body {
                 padding: 12px;
@@ -739,22 +703,16 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Шапка с переключателем -->
-        <div class="app-header">
-            <div class="view-tabs">
-                <button class="tab-btn active" data-view="cards">📇 Карточки</button>
-                <button class="tab-btn" data-view="journal">📝 Дневник</button>
-            </div>
+        <div class="mode-switch-header" id="modeSwitchHeader">
+            <div class="mode-title" id="modeTitle">Планетаход</div>
         </div>
 
-        <!-- Глобальный поиск -->
         <div class="global-search">
             <input type="text" id="globalSearchInput" class="global-search__input" 
                    placeholder="Поиск по всем записям и карточкам..." autocomplete="off">
             <div id="globalSuggestions" class="global-search__suggestions"></div>
         </div>
 
-        <!-- Контейнер для карточек (Планетаход) -->
         <div id="cardsView" class="view-container active">
             <div class="cards-system">
                 <div class="cards-system__controls">
@@ -765,7 +723,6 @@
             </div>
         </div>
 
-        <!-- Контейнер для дневника -->
         <div id="journalView" class="view-container">
             <div class="journal">
                 <div class="days-container" id="daysContainer"></div>
@@ -773,21 +730,11 @@
         </div>
     </div>
 
-    <!-- Плавающая кнопка -->
     <button class="floating-add-button" id="floatingBtn">+</button>
-    
-    <!-- Меню создания -->
-    <div id="createMenu" class="create-menu" style="display: none;">
-        <button class="create-menu-btn" id="createJournalBtn">📝 Запись в дневник</button>
-        <button class="create-menu-btn" id="createCardBtn">📇 Карточку</button>
-    </div>
-
-    <!-- Кнопка имени (из Планетахода) -->
     <button class="fixed-name-button" id="fixedNameButton" style="display: none;">
         <span id="userNameDisplay"></span>
     </button>
 
-    <!-- Модальное окно имени (из Планетахода) -->
     <div class="name-modal" id="nameModal" style="display: none;">
         <div class="name-modal__content">
             <div class="name-modal__title">Введите ваше имя</div>
@@ -796,7 +743,6 @@
         </div>
     </div>
 
-    <!-- EJS шаблоны для дневника -->
     <script type="text/ejs" id="dayGroupTemplate">
         <div class="day-group" data-date="<%= date %>">
             <div class="day-group__header">
@@ -821,7 +767,6 @@
         </div>
     </script>
 
-    <!-- EJS шаблон для карточек -->
     <script type="text/ejs" id="card-template">
         <div class="card" data-card-id="<%= id %>">
             <div class="card__parents">
@@ -913,1251 +858,537 @@
     </script>
 
     <script>
-        // ==================== МОДЕЛЬ ДНЕВНИКА (из первого файла) ====================
+        // ==================== МОДЕЛЬ ДНЕВНИКА ====================
         const JournalModel = {
             entries: [],
-            
             generateId: () => Date.now() + Math.random() * 10000,
-            
             load: function() {
                 const saved = localStorage.getItem('journal_entries_v6');
-                if (saved) {
-                    try {
-                        this.entries = JSON.parse(saved);
-                        this.sortEntries();
-                    } catch(e) { console.error(e); }
-                }
-                
+                if (saved) { try { this.entries = JSON.parse(saved); this.sortEntries(); } catch(e) { } }
                 if (this.entries.length === 0) {
-                    const today = new Date();
-                    const todayStr = today.toISOString().slice(0,10);
-                    const yesterday = new Date(Date.now() - 86400000);
-                    const yesterdayStr = yesterday.toISOString().slice(0,10);
-                    
-                    this.entries.push({
-                        id: this.generateId(),
-                        date: yesterdayStr,
-                        text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.",
-                        createdAt: yesterday.toISOString()
-                    });
-                    this.entries.push({
-                        id: this.generateId(),
-                        date: todayStr,
-                        text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.",
-                        createdAt: today.toISOString()
-                    });
+                    const today = new Date(), todayStr = today.toISOString().slice(0,10);
+                    const yesterday = new Date(Date.now() - 86400000), yesterdayStr = yesterday.toISOString().slice(0,10);
+                    this.entries.push({ id: this.generateId(), date: yesterdayStr, text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.", createdAt: yesterday.toISOString() });
+                    this.entries.push({ id: this.generateId(), date: todayStr, text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.", createdAt: today.toISOString() });
                     this.save();
                 }
             },
-            
-            sortEntries: function() {
-                this.entries.sort((a, b) => {
-                    if (a.date !== b.date) return a.date.localeCompare(b.date);
-                    return new Date(a.createdAt) - new Date(b.createdAt);
-                });
-            },
-            
-            save: function() {
-                this.sortEntries();
-                localStorage.setItem('journal_entries_v6', JSON.stringify(this.entries));
-            },
-            
+            sortEntries: function() { this.entries.sort((a,b) => { if(a.date !== b.date) return a.date.localeCompare(b.date); return new Date(a.createdAt) - new Date(b.createdAt); }); },
+            save: function() { this.sortEntries(); localStorage.setItem('journal_entries_v6', JSON.stringify(this.entries)); },
             getGroupedEntries: function() {
                 const groups = new Map();
-                this.entries.forEach(entry => {
-                    if (!groups.has(entry.date)) {
-                        groups.set(entry.date, []);
-                    }
-                    groups.get(entry.date).push(entry);
-                });
-                
+                this.entries.forEach(entry => { if(!groups.has(entry.date)) groups.set(entry.date, []); groups.get(entry.date).push(entry); });
                 const result = [];
-                for (let [date, entries] of groups.entries()) {
-                    const formattedEntries = entries.map(entry => ({
-                        ...entry,
-                        time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-                    }));
-                    
+                for(let [date, entries] of groups.entries()) {
+                    const formattedEntries = entries.map(entry => ({ ...entry, time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }) }));
                     const dateObj = new Date(date);
-                    result.push({
-                        date: date,
-                        formattedDate: dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-                        weekday: dateObj.toLocaleDateString('ru-RU', { weekday: 'long' }),
-                        entries: formattedEntries
-                    });
+                    result.push({ date, formattedDate: dateObj.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' }), weekday: dateObj.toLocaleDateString('ru-RU', { weekday:'long' }), entries: formattedEntries });
                 }
-                
-                result.sort((a, b) => a.date.localeCompare(b.date));
+                result.sort((a,b) => a.date.localeCompare(b.date));
                 return result;
             },
-            
-            addEntry: function(date, time, text) {
-                if (!text || !text.trim()) return null;
-                
-                const dateTimeStr = `${date}T${time}:00`;
-                const createdAt = new Date(dateTimeStr);
-                
-                const newEntry = {
-                    id: this.generateId(),
-                    date: date,
-                    text: text.trim(),
-                    createdAt: createdAt.toISOString()
-                };
-                this.entries.push(newEntry);
-                this.save();
-                return newEntry;
-            },
-            
-            updateEntry: function(id, date, time, newText) {
-                const entry = this.entries.find(e => e.id == id);
-                if (entry && newText && newText.trim()) {
-                    const dateTimeStr = `${date}T${time}:00`;
-                    const createdAt = new Date(dateTimeStr);
-                    
-                    entry.text = newText.trim();
-                    entry.date = date;
-                    entry.createdAt = createdAt.toISOString();
-                    this.save();
-                    return true;
-                }
-                return false;
-            },
-            
-            deleteEntry: function(id) {
-                const index = this.entries.findIndex(e => e.id == id);
-                if (index !== -1) {
-                    this.entries.splice(index, 1);
-                    this.save();
-                    return true;
-                }
-                return false;
-            },
-            
-            searchEntries: function(query) {
-                if (!query || !query.trim()) return [];
-                const lowerQuery = query.toLowerCase().trim();
-                return this.entries.filter(entry => 
-                    entry.text.toLowerCase().includes(lowerQuery)
-                ).map(entry => ({
-                    id: entry.id,
-                    type: 'journal',
-                    title: entry.text.substring(0, 50) + (entry.text.length > 50 ? '...' : ''),
-                    date: new Date(entry.date).toLocaleDateString('ru-RU')
-                }));
-            },
-            
-            getTodayDate: function() {
-                const now = new Date();
-                return now.toISOString().slice(0,10);
-            },
-            
-            getCurrentTime: function() {
-                const now = new Date();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                return `${hours}:${minutes}`;
-            },
-            
-            getEntryById: function(id) {
-                return this.entries.find(e => e.id == id);
-            }
+            addEntry: function(date, time, text) { if(!text || !text.trim()) return null; const createdAt = new Date(`${date}T${time}:00`); const newEntry = { id: this.generateId(), date, text: text.trim(), createdAt: createdAt.toISOString() }; this.entries.push(newEntry); this.save(); return newEntry; },
+            updateEntry: function(id, date, time, newText) { const entry = this.entries.find(e => e.id == id); if(entry && newText && newText.trim()) { const createdAt = new Date(`${date}T${time}:00`); entry.text = newText.trim(); entry.date = date; entry.createdAt = createdAt.toISOString(); this.save(); return true; } return false; },
+            deleteEntry: function(id) { const index = this.entries.findIndex(e => e.id == id); if(index !== -1) { this.entries.splice(index,1); this.save(); return true; } return false; },
+            searchEntries: function(query) { if(!query || !query.trim()) return []; const lowerQuery = query.toLowerCase().trim(); return this.entries.filter(entry => entry.text.toLowerCase().includes(lowerQuery)).map(entry => ({ id: entry.id, type:'journal', title: entry.text.substring(0,50) + (entry.text.length>50?'...':''), date: new Date(entry.date).toLocaleDateString('ru-RU') })); },
+            getTodayDate: function() { return new Date().toISOString().slice(0,10); },
+            getCurrentTime: function() { const now = new Date(); return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; },
+            getEntryById: function(id) { return this.entries.find(e => e.id == id); }
         };
         
         // ==================== ПРЕДСТАВЛЕНИЕ ДНЕВНИКА ====================
         const JournalView = {
             render: function() {
                 const groups = JournalModel.getGroupedEntries();
-                const $container = $('#daysContainer');
-                $container.empty();
-                
-                if (groups.length === 0) {
-                    const emptyHtml = ejs.render($('#emptyTemplate').text(), {});
-                    $container.html(emptyHtml);
-                    return;
-                }
-                
-                groups.forEach(group => {
-                    const html = ejs.render($('#dayGroupTemplate').text(), group);
-                    $container.append(html);
-                });
-                
+                const $container = $('#daysContainer'); $container.empty();
+                if(groups.length === 0) { $container.html(ejs.render($('#emptyTemplate').text(), {})); return; }
+                groups.forEach(group => { $container.append(ejs.render($('#dayGroupTemplate').text(), group)); });
                 this.bindEvents();
             },
-            
-            bindEvents: function() {
-                $('.entry-item').off('click').on('click', function(e) {
-                    e.stopPropagation();
-                    const entryId = $(this).data('entry-id');
-                    if (entryId) {
-                        JournalController.openEditModal(entryId);
-                    }
-                });
-            },
-            
-            highlightEntryById: function(entryId) {
-                const $entry = $(`.entry-item[data-entry-id="${entryId}"]`);
-                if ($entry.length) {
-                    $entry.addClass('highlight');
-                    setTimeout(() => $entry.removeClass('highlight'), 1000);
-                    $entry.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
+            bindEvents: function() { $('.entry-item').off('click').on('click', function(e) { e.stopPropagation(); const entryId = $(this).data('entry-id'); if(entryId) JournalController.openEditModal(entryId); }); },
+            highlightEntryById: function(entryId) { const $entry = $(`.entry-item[data-entry-id="${entryId}"]`); if($entry.length) { $entry.addClass('highlight'); setTimeout(() => $entry.removeClass('highlight'),1000); $entry.get(0).scrollIntoView({ behavior:'smooth', block:'center' }); } }
         };
         
         // ==================== КОНТРОЛЛЕР ДНЕВНИКА ====================
         const JournalController = {
-            openAddModal: function() {
-                const today = JournalModel.getTodayDate();
-                const currentTime = JournalModel.getCurrentTime();
-                
-                this.showFullscreenModal({
-                    title: 'Новая запись',
-                    dateValue: today,
-                    timeValue: currentTime,
-                    textValue: '',
-                    showDelete: false,
-                    onSave: (date, time, text) => {
-                        if (text && text.trim()) {
-                            const newEntry = JournalModel.addEntry(date, time, text);
-                            if (newEntry) {
-                                JournalView.render();
-                                setTimeout(() => {
-                                    JournalView.highlightEntryById(newEntry.id);
-                                }, 100);
-                            }
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-            },
-            
-            openEditModal: function(entryId) {
-                const entry = JournalModel.getEntryById(entryId);
-                if (!entry) return;
-                
-                const entryDate = entry.date;
-                const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                
-                this.showFullscreenModal({
-                    title: 'Редактировать запись',
-                    dateValue: entryDate,
-                    timeValue: entryTime,
-                    textValue: entry.text,
-                    showDelete: true,
-                    onSave: (date, time, text) => {
-                        if (text && text.trim()) {
-                            JournalModel.updateEntry(entryId, date, time, text);
-                            JournalView.render();
-                            setTimeout(() => {
-                                JournalView.highlightEntryById(entryId);
-                            }, 100);
-                            return true;
-                        }
-                        return false;
-                    },
-                    onDelete: () => {
-                        if (confirm('Уничтожить эту запись?')) {
-                            JournalModel.deleteEntry(entryId);
-                            JournalView.render();
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-            },
-            
+            openAddModal: function() { this.showFullscreenModal({ title:'Новая запись', dateValue: JournalModel.getTodayDate(), timeValue: JournalModel.getCurrentTime(), textValue:'', showDelete:false, onSave: (date,time,text) => { if(text && text.trim()) { const newEntry = JournalModel.addEntry(date,time,text); if(newEntry) { JournalView.render(); setTimeout(() => JournalView.highlightEntryById(newEntry.id),100); } return true; } return false; } }); },
+            openEditModal: function(entryId) { const entry = JournalModel.getEntryById(entryId); if(!entry) return; const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }); this.showFullscreenModal({ title:'Редактировать запись', dateValue:entry.date, timeValue:entryTime, textValue:entry.text, showDelete:true, onSave: (date,time,text) => { if(text && text.trim()) { JournalModel.updateEntry(entryId,date,time,text); JournalView.render(); setTimeout(() => JournalView.highlightEntryById(entryId),100); return true; } return false; }, onDelete: () => { if(confirm('Уничтожить эту запись?')) { JournalModel.deleteEntry(entryId); JournalView.render(); return true; } return false; } }); },
             showFullscreenModal: function(options) {
                 const modalId = 'fullscreenModal_' + Date.now();
-                
-                const deleteButtonHtml = options.showDelete ? 
-                    '<button class="fullscreen-modal__button fullscreen-modal__button--delete" id="deleteBtn">Уничтожить</button>' : '';
-                
-                const modalHtml = `
-                    <div class="fullscreen-modal" id="${modalId}">
-                        <div class="fullscreen-modal__header">
-                            <div class="fullscreen-modal__title">${options.title}</div>
-                            <div class="fullscreen-modal__actions">
-                                <button class="fullscreen-modal__button fullscreen-modal__button--save" id="saveBtn">Сохранить</button>
-                                ${deleteButtonHtml}
-                                <button class="fullscreen-modal__button" id="cancelBtn">Отмена</button>
-                            </div>
-                        </div>
-                        <div class="fullscreen-modal__content">
-                            <div class="fullscreen-modal__datetime">
-                                <input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}">
-                                <input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}">
-                            </div>
-                            <div class="fullscreen-modal__textarea-wrapper">
-                                <textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                $('body').append(modalHtml);
-                const $modal = $('#' + modalId);
-                const $dateInput = $modal.find('#dateInput');
-                const $timeInput = $modal.find('#timeInput');
-                const $textInput = $modal.find('#textInput');
-                
-                setTimeout(() => $textInput.focus(), 100);
-                
+                const deleteButtonHtml = options.showDelete ? '<button class="fullscreen-modal__button fullscreen-modal__button--delete" id="deleteBtn">Уничтожить</button>' : '';
+                const modalHtml = `<div class="fullscreen-modal" id="${modalId}"><div class="fullscreen-modal__header"><div class="fullscreen-modal__title">${options.title}</div><div class="fullscreen-modal__actions"><button class="fullscreen-modal__button fullscreen-modal__button--save" id="saveBtn">Сохранить</button>${deleteButtonHtml}<button class="fullscreen-modal__button" id="cancelBtn">Отмена</button></div></div><div class="fullscreen-modal__content"><div class="fullscreen-modal__datetime"><input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}"><input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}"></div><div class="fullscreen-modal__textarea-wrapper"><textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea></div></div></div>`;
+                $('body').append(modalHtml); const $modal = $('#'+modalId); const $dateInput=$modal.find('#dateInput'), $timeInput=$modal.find('#timeInput'), $textInput=$modal.find('#textInput');
+                setTimeout(() => $textInput.focus(),100);
                 const closeModal = () => { $modal.remove(); };
-                
-                $modal.find('#saveBtn').on('click', () => {
-                    const date = $dateInput.val();
-                    const time = $timeInput.val();
-                    const text = $textInput.val();
-                    
-                    if (!date || !time) {
-                        alert('Заполните дату и время');
-                        return;
-                    }
-                    
-                    if (options.onSave(date, time, text)) {
-                        closeModal();
-                    } else if (!text.trim()) {
-                        alert('Запись не может быть пустой');
-                    }
-                });
-                
-                if (options.showDelete) {
-                    $modal.find('#deleteBtn').on('click', () => {
-                        if (options.onDelete()) closeModal();
-                    });
-                }
-                
-                $modal.find('#cancelBtn').on('click', closeModal);
-                $(document).on('keydown.' + modalId, (e) => {
-                    if (e.key === 'Escape') {
-                        closeModal();
-                        $(document).off('keydown.' + modalId);
-                    }
-                });
+                $modal.find('#saveBtn').on('click',()=>{ const date=$dateInput.val(), time=$timeInput.val(), text=$textInput.val(); if(!date||!time){alert('Заполните дату и время'); return;} if(options.onSave(date,time,text)) closeModal(); else if(!text.trim()) alert('Запись не может быть пустой'); });
+                if(options.showDelete) $modal.find('#deleteBtn').on('click',()=>{ if(options.onDelete()) closeModal(); });
+                $modal.find('#cancelBtn').on('click',closeModal);
+                $(document).on('keydown.'+modalId, (e)=>{ if(e.key==='Escape') { closeModal(); $(document).off('keydown.'+modalId); } });
             },
-            
-            escapeHtml: function(str) {
-                if (!str) return '';
-                return str.replace(/[&<>]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    return m;
-                });
-            }
+            escapeHtml: function(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
         };
         
-        // ==================== МОДЕЛЬ КАРТОЧЕК (из второго файла) ====================
-        const CardsModel = {
-            cards: [],
+        // ==================== МОДЕЛЬ КАРТОЧЕК (Планетаход) ====================
+        const CardsModel = { 
+            cards: [], 
+            generateId: () => Date.now(), 
+            saveState: () => localStorage.setItem('cardsSystem', JSON.stringify(CardsModel.cards)),
             
-            generateId: () => Date.now(),
-            
-            saveState: () => {
-                localStorage.setItem('cardsSystem', JSON.stringify(CardsModel.cards));
+            addCard: (initialTitle='') => { 
+                const now=new Date(); 
+                const placeholder = `Карточка от ${now.toLocaleDateString()} ${now.toLocaleTimeString().slice(0,5)}`; 
+                const newCard={ 
+                    id:CardsModel.generateId(), 
+                    title:initialTitle||"", 
+                    placeholder, 
+                    content:"", 
+                    parentIds:[], 
+                    mentions:[], 
+                    children:[], 
+                    createdAt:now.toLocaleString(), 
+                    bumpedAt:now.toISOString(), 
+                    isEmpty:!initialTitle 
+                }; 
+                CardsModel.cards.push(newCard); 
+                CardsModel.saveState(); 
+                CardsModel.updateAllRelations(); 
+                return newCard; 
             },
             
-            addCard: (initialTitle = '') => {
-                const now = new Date();
-                const placeholder = `Карточка от ${now.toLocaleDateString()} ${now.toLocaleTimeString().slice(0,5)}`;
+            updateCard: (cardId, updates) => { 
+                const card=CardsModel.getCard(cardId); 
+                if(card){ 
+                    Object.assign(card,updates); 
+                    CardsModel.saveState(); 
+                    CardsModel.updateAllRelations(); 
+                    return true; 
+                } 
+                return false; 
+            },
+            
+            addParent: (cardId, parentId) => { 
+                const card=CardsModel.getCard(cardId), parentCard=CardsModel.getCard(parentId); 
+                if(card && parentCard && cardId!=parentId && !(card.parentIds||[]).some(id=>id==parentId)){ 
+                    if(!card.parentIds) card.parentIds=[]; 
+                    card.parentIds.push(parentId); 
+                    if(card.isEmpty){ 
+                        card.isEmpty=false; 
+                        card.title=card.placeholder; 
+                    } 
+                    CardsModel.saveState(); 
+                    CardsModel.updateAllRelations(); 
+                    return true; 
+                } 
+                return false; 
+            },
+            
+            addChild: (parentId, childId) => CardsModel.addParent(childId, parentId),
+            
+            removeParent: (cardId, parentId) => { 
+                const card=CardsModel.getCard(cardId); 
+                if(card && card.parentIds){ 
+                    const idx=card.parentIds.findIndex(id=>id==parentId); 
+                    if(idx!==-1){ 
+                        card.parentIds.splice(idx,1); 
+                        CardsModel.saveState(); 
+                        CardsModel.updateAllRelations(); 
+                        return true; 
+                    } 
+                } 
+                return false; 
+            },
+            
+            removeChild: (parentId, childId) => CardsModel.removeParent(childId, parentId),
+            
+            deleteCard: (cardId) => { 
+                const idx=CardsModel.cards.findIndex(c=>c.id==cardId); 
+                if(idx!==-1){ 
+                    CardsModel.cards.forEach(card=>{ 
+                        if(card.parentIds) card.parentIds=card.parentIds.filter(id=>id!=cardId); 
+                    }); 
+                    CardsModel.cards.splice(idx,1); 
+                    CardsModel.saveState(); 
+                    CardsModel.updateAllRelations(); 
+                    return true; 
+                } 
+                return false; 
+            },
+            
+            deleteAllCards: () => { 
+                if(CardsModel.cards.length===0) return false; 
+                CardsModel.cards=[]; 
+                CardsModel.saveState(); 
+                return true; 
+            },
+            
+            updateAllRelations: () => { 
+                // Обновляем mentions
+                CardsModel.cards.forEach(card=>card.mentions=[]); 
+                CardsModel.cards.forEach(sourceCard=>{ 
+                    const matches=sourceCard.content.match(/\[\[(\d+)\]\]/g)||[]; 
+                    matches.forEach(match=>{ 
+                        const cardId=match.match(/\d+/)[0]; 
+                        const targetCard=CardsModel.getCard(cardId); 
+                        if(targetCard) targetCard.mentions.push({ sourceCard:{ id:sourceCard.id, title:sourceCard.title }, context:sourceCard.content }); 
+                    }); 
+                }); 
                 
-                const newCard = {
-                    id: CardsModel.generateId(),
-                    title: initialTitle || "",
-                    placeholder: placeholder,
-                    content: "",
-                    parentIds: [],
-                    mentions: [],
-                    children: [],
-                    createdAt: now.toLocaleString(),
-                    bumpedAt: now.toISOString(),
-                    isEmpty: !initialTitle
-                };
-                
-                CardsModel.cards.push(newCard);
-                CardsModel.saveState();
-                CardsModel.updateAllRelations();
-                return newCard;
+                // Обновляем children
+                CardsModel.cards.forEach(card=>{ card.children=[]; }); 
+                CardsModel.cards.forEach(card=>{ 
+                    if(card.parentIds) card.parentIds.forEach(parentId=>{ 
+                        const parentCard=CardsModel.getCard(parentId); 
+                        if(parentCard) parentCard.children.push({ id:card.id, title:card.title }); 
+                    }); 
+                }); 
             },
             
-            updateCard: (cardId, updates) => {
-                const card = CardsModel.getCard(cardId);
-                if (card) {
-                    Object.assign(card, updates);
-                    CardsModel.saveState();
-                    CardsModel.updateAllRelations();
-                    return true;
-                }
-                return false;
+            getCard: (cardId) => CardsModel.cards.find(c=>c.id==cardId),
+            
+            // Рекурсивный поиск всех родительских ID
+            getAllParentIds: (cardId) => { 
+                const all=new Set(); 
+                const queue=[cardId]; 
+                while(queue.length){ 
+                    const cur=queue.shift(); 
+                    const curCard=CardsModel.getCard(cur); 
+                    if(curCard && curCard.parentIds) curCard.parentIds.forEach(pid=>{ 
+                        if(!all.has(pid)){ 
+                            all.add(pid); 
+                            queue.push(pid); 
+                        } 
+                    }); 
+                } 
+                return Array.from(all); 
             },
             
-            addParent: (cardId, parentId) => {
-                const card = CardsModel.getCard(cardId);
-                const parentCard = CardsModel.getCard(parentId);
-                
-                if (card && parentCard && cardId != parentId) {
-                    if (!card.parentIds) card.parentIds = [];
-                    
-                    if (!card.parentIds.some(id => id == parentId)) {
-                        card.parentIds.push(parentId);
-                        if (card.isEmpty) {
-                            card.isEmpty = false;
-                            card.title = card.placeholder;
-                        }
-                        CardsModel.saveState();
-                        CardsModel.updateAllRelations();
-                        return true;
-                    }
-                }
-                return false;
+            // Рекурсивный поиск всех дочерних ID
+            getAllChildIds: (cardId) => { 
+                const all=new Set(); 
+                const queue=[cardId]; 
+                while(queue.length){ 
+                    const cur=queue.shift(); 
+                    const curCard=CardsModel.getCard(cur); 
+                    if(curCard && curCard.children) curCard.children.forEach(child=>{ 
+                        if(!all.has(child.id)){ 
+                            all.add(child.id); 
+                            queue.push(child.id); 
+                        } 
+                    }); 
+                } 
+                return Array.from(all); 
             },
             
-            addChild: (parentId, childId) => {
-                return CardsModel.addParent(childId, parentId);
+            searchCards: (query, excludeCardId, excludeChildren=false) => { 
+                if(!query) return []; 
+                let excludeIds=excludeCardId?[excludeCardId]:[]; 
+                if(excludeCardId){ 
+                    excludeIds=excludeIds.concat(CardsModel.getAllParentIds(excludeCardId)); 
+                    if(excludeChildren) excludeIds=excludeIds.concat(CardsModel.getAllChildIds(excludeCardId)); 
+                } 
+                return CardsModel.cards.filter(card=> 
+                    card.title.toLowerCase().includes(query.toLowerCase()) && 
+                    !excludeIds.includes(card.id)
+                ).map(card=>({ 
+                    id:card.id, 
+                    type:'card', 
+                    title:card.title, 
+                    date:new Date(card.createdAt).toLocaleDateString('ru-RU') 
+                })); 
             },
             
-            removeParent: (cardId, parentId) => {
-                const card = CardsModel.getCard(cardId);
-                if (card && card.parentIds) {
-                    const index = card.parentIds.findIndex(id => id == parentId);
-                    if (index !== -1) {
-                        card.parentIds.splice(index, 1);
-                        CardsModel.saveState();
-                        CardsModel.updateAllRelations();
-                        return true;
-                    }
-                }
-                return false;
-            },
-            
-            removeChild: (parentId, childId) => {
-                return CardsModel.removeParent(childId, parentId);
-            },
-            
-            deleteCard: (cardId) => {
-                const index = CardsModel.cards.findIndex(c => c.id == cardId);
-                if (index !== -1) {
-                    CardsModel.cards.forEach(card => {
-                        if (card.parentIds) {
-                            card.parentIds = card.parentIds.filter(id => id != cardId);
-                        }
-                    });
-                    
-                    CardsModel.cards.splice(index, 1);
-                    CardsModel.saveState();
-                    CardsModel.updateAllRelations();
-                    return true;
-                }
-                return false;
-            },
-            
-            deleteAllCards: () => {
-                if (CardsModel.cards.length === 0) return false;
-                CardsModel.cards = [];
-                CardsModel.saveState();
-                return true;
-            },
-            
-            updateAllRelations: () => {
-                CardsModel.updateMentions();
-                CardsModel.updateChildrenRelations();
-            },
-            
-            updateMentions: () => {
-                CardsModel.cards.forEach(card => {
-                    card.mentions = [];
-                });
-                
-                CardsModel.cards.forEach(sourceCard => {
-                    const matches = sourceCard.content.match(/\[\[(\d+)\]\]/g) || [];
-                    matches.forEach(match => {
-                        const cardId = match.match(/\d+/)[0];
-                        const targetCard = CardsModel.getCard(cardId);
-                        if (targetCard) {
-                            targetCard.mentions.push({
-                                sourceCard: { id: sourceCard.id, title: sourceCard.title },
-                                context: sourceCard.content
-                            });
-                        }
-                    });
-                });
-            },
-            
-            updateChildrenRelations: () => {
-                CardsModel.cards.forEach(card => {
-                    card.children = [];
-                });
-                
-                CardsModel.cards.forEach(card => {
-                    if (card.parentIds && card.parentIds.length > 0) {
-                        card.parentIds.forEach(parentId => {
-                            const parentCard = CardsModel.getCard(parentId);
-                            if (parentCard) {
-                                parentCard.children.push({
-                                    id: card.id,
-                                    title: card.title
-                                });
+            loadState: () => { 
+                const saved=localStorage.getItem('cardsSystem'); 
+                if(saved){ 
+                    try{ 
+                        CardsModel.cards=JSON.parse(saved); 
+                        CardsModel.cards.forEach(c=>{ 
+                            if(!c.parentIds) c.parentIds=[]; 
+                            if(!c.children) c.children=[]; 
+                            if(!c.mentions) c.mentions=[]; 
+                            if(!c.bumpedAt) c.bumpedAt=c.createdAt?new Date(c.createdAt).toISOString():new Date().toISOString(); 
+                            if(c.isEmpty===undefined) c.isEmpty=(c.title===""); 
+                            if(!c.placeholder && c.isEmpty) {
+                                const date = new Date(c.createdAt || Date.now());
+                                c.placeholder = `Карточка от ${date.toLocaleDateString()} ${date.toLocaleTimeString().slice(0,5)}`;
                             }
-                        });
-                    }
-                });
-            },
-            
-            getAllParentIds: (cardId) => {
-                const allParentIds = new Set();
-                const queue = [cardId];
-                
-                while (queue.length > 0) {
-                    const currentId = queue.shift();
-                    const currentCard = CardsModel.getCard(currentId);
-                    
-                    if (currentCard && currentCard.parentIds) {
-                        currentCard.parentIds.forEach(parentId => {
-                            if (!allParentIds.has(parentId)) {
-                                allParentIds.add(parentId);
-                                queue.push(parentId);
-                            }
-                        });
-                    }
-                }
-                
-                return Array.from(allParentIds);
-            },
-            
-            getAllChildIds: (cardId) => {
-                const allChildIds = new Set();
-                const queue = [cardId];
-                
-                while (queue.length > 0) {
-                    const currentId = queue.shift();
-                    const currentCard = CardsModel.getCard(currentId);
-                    
-                    if (currentCard && currentCard.children) {
-                        currentCard.children.forEach(child => {
-                            if (!allChildIds.has(child.id)) {
-                                allChildIds.add(child.id);
-                                queue.push(child.id);
-                            }
-                        });
-                    }
-                }
-                
-                return Array.from(allChildIds);
-            },
-            
-            getCard: (cardId) => {
-                return CardsModel.cards.find(c => c.id == cardId);
-            },
-            
-            searchCards: (query, excludeCardId, excludeChildren = false) => {
-                if (!query) return [];
-                
-                let excludeIds = excludeCardId ? [excludeCardId] : [];
-                
-                if (excludeCardId) {
-                    excludeIds = excludeIds.concat(CardsModel.getAllParentIds(excludeCardId));
-                    if (excludeChildren) {
-                        excludeIds = excludeIds.concat(CardsModel.getAllChildIds(excludeCardId));
-                    }
-                }
-                
-                return CardsModel.cards.filter(card => {
-                    return card.title.toLowerCase().includes(query.toLowerCase()) && 
-                           !excludeIds.includes(card.id);
-                }).map(card => ({
-                    id: card.id,
-                    type: 'card',
-                    title: card.title,
-                    date: new Date(card.createdAt).toLocaleDateString('ru-RU')
-                }));
-            },
-            
-            loadState: () => {
-                const savedCards = localStorage.getItem('cardsSystem');
-                if (savedCards) {
-                    try {
-                        CardsModel.cards = JSON.parse(savedCards);
-                        
-                        CardsModel.cards.forEach(card => {
-                            if (!card.parentIds) card.parentIds = [];
-                            if (!card.children) card.children = [];
-                            if (!card.mentions) card.mentions = [];
-                            
-                            if (!card.bumpedAt) {
-                                card.bumpedAt = card.createdAt 
-                                    ? new Date(card.createdAt).toISOString() 
-                                    : new Date().toISOString();
-                            }
-                            
-                            if (card.isEmpty === undefined) {
-                                card.isEmpty = (card.title === "" || card.title === "Новая карточка");
-                                if (card.isEmpty && !card.placeholder) {
-                                    const date = new Date(card.createdAt || Date.now());
-                                    card.placeholder = `Карточка от ${date.toLocaleDateString()} ${date.toLocaleTimeString().slice(0,5)}`;
-                                }
-                            }
-                            
-                            if (card.isEmpty && card.parentIds.length === 0 && card.children.length === 0) {
-                                card.title = "";
-                            }
-                            else if (card.isEmpty) {
-                                card.title = card.placeholder;
-                                card.isEmpty = false;
-                            }
-                        });
-                        
-                        CardsModel.cards.sort((a, b) => 
-                            new Date(a.bumpedAt) - new Date(b.bumpedAt)
-                        );
-                        
-                        CardsModel.updateAllRelations();
-                    } catch (e) {
-                        console.error("Ошибка загрузки:", e);
-                    }
-                } else {
-                    CardsModel.addDemoCards();
-                }
-            },
-            
-            addDemoCards: () => {
-                const cardId1 = CardsModel.generateId();
-                const cardId2 = CardsModel.generateId();
-                
-                CardsModel.cards.push({
-                    id: cardId1,
-                    title: "Планетаход",
-                    placeholder: "Карточка",
-                    content: "Это главная карточка. Попробуй добавить родительскую или дочернюю карточку.",
-                    parentIds: [],
-                    mentions: [],
-                    children: [],
-                    createdAt: new Date().toLocaleString(),
-                    bumpedAt: new Date().toISOString(),
-                    isEmpty: false
-                });
-                
-                CardsModel.cards.push({
-                    id: cardId2,
-                    title: "Пример связи",
-                    placeholder: "Карточка",
-                    content: "Эта карточка связана с Планетаходом.",
-                    parentIds: [cardId1],
-                    mentions: [],
-                    children: [],
-                    createdAt: new Date(Date.now() - 86400000).toLocaleString(),
-                    bumpedAt: new Date(Date.now() - 86400000).toISOString(),
-                    isEmpty: false
-                });
-                
-                CardsModel.saveState();
-                CardsModel.updateAllRelations();
+                            if(!c.placeholder && !c.isEmpty) c.placeholder = c.title || "Карточка";
+                        }); 
+                        CardsModel.cards.sort((a,b)=>new Date(a.bumpedAt)-new Date(b.bumpedAt)); 
+                        CardsModel.updateAllRelations(); 
+                    }catch(e){} 
+                } else { 
+                    const id1=CardsModel.generateId(), id2=CardsModel.generateId(); 
+                    CardsModel.cards.push({ 
+                        id:id1, 
+                        title:"Планетаход", 
+                        placeholder:"Карточка", 
+                        content:"Это главная карточка. Попробуй добавить родительскую или дочернюю карточку.", 
+                        parentIds:[], 
+                        mentions:[], 
+                        children:[], 
+                        createdAt:new Date().toLocaleString(), 
+                        bumpedAt:new Date().toISOString(), 
+                        isEmpty:false 
+                    }); 
+                    CardsModel.cards.push({ 
+                        id:id2, 
+                        title:"Пример связи", 
+                        placeholder:"Карточка", 
+                        content:"Эта карточка связана с Планетаходом.", 
+                        parentIds:[id1], 
+                        mentions:[], 
+                        children:[], 
+                        createdAt:new Date(Date.now()-86400000).toLocaleString(), 
+                        bumpedAt:new Date(Date.now()-86400000).toISOString(), 
+                        isEmpty:false 
+                    }); 
+                    CardsModel.saveState(); 
+                    CardsModel.updateAllRelations(); 
+                } 
             }
         };
         
         // ==================== ПРЕДСТАВЛЕНИЕ КАРТОЧЕК ====================
-        const CardsView = {
-            render: () => {
-                $('#cards-container').empty();
-                
-                CardsModel.cards.forEach(card => {
-                    const parentIds = card.parentIds || [];
-                    const parents = parentIds.map(id => {
-                        const parentCard = CardsModel.getCard(id);
-                        return parentCard ? { id: parentCard.id, title: parentCard.title } : null;
-                    }).filter(Boolean);
-                    
-                    const children = card.children || [];
-                    const mentions = card.mentions || [];
-                    
-                    const html = ejs.render($('#card-template').text(), {
-                        ...card,
-                        parents: parents,
-                        children: children,
-                        mentions: mentions
-                    });
-                    
-                    $('#cards-container').append(html);
-                });
-                
-                CardsView.bindEvents();
-            },
+        const CardsView = { 
+            render: () => { 
+                $('#cards-container').empty(); 
+                CardsModel.cards.forEach(card=>{ 
+                    const parents=(card.parentIds||[]).map(id=>{ const p=CardsModel.getCard(id); return p?{ id:p.id, title:p.title }:null; }).filter(Boolean); 
+                    const html=ejs.render($('#card-template').text(),{ ...card, parents, children:card.children||[], mentions:card.mentions||[] }); 
+                    $('#cards-container').append(html); 
+                }); 
+                CardsView.bindEvents(); 
+            }, 
             
-            bindEvents: () => {
+            bindEvents: () => { 
                 $(document)
-                    .off('click', '#add-card-btn')
-                    .on('click', '#add-card-btn', CardsController.handleAddCard)
-                    .off('click', '#delete-all-btn')
-                    .on('click', '#delete-all-btn', CardsController.handleDeleteAllCards)
-                    .off('click', '.card__header .button--danger')
-                    .on('click', '.card__header .button--danger', CardsController.handleDeleteCard)
-                    .off('input', '.card__title')
-                    .on('input', '.card__title', CardsController.handleCardTitleChange)
-                    .off('input', '.card__textarea')
-                    .on('input', '.card__textarea', CardsController.handleCardContentChange)
-                    .off('click', '.remove-parent')
-                    .on('click', '.remove-parent', CardsController.handleRemoveParent)
-                    .off('click', '.remove-child')
-                    .on('click', '.remove-child', CardsController.handleRemoveChild)
-                    .off('click', '.remove-with-card')
-                    .on('click', '.remove-with-card', CardsController.handleRemoveWithCard)
-                    .off('click', '.mention, .child-link')
-                    .on('click', '.mention, .child-link', CardsController.handleMentionClick)
-                    .off('input', '.parent-search-input')
-                    .on('input', '.parent-search-input', CardsController.handleParentSearch)
-                    .off('click', '.parent-search-add')
-                    .on('click', '.parent-search-add', CardsController.handleAddParent)
-                    .off('click', '.parent-suggestion-item')
-                    .on('click', '.parent-suggestion-item', CardsController.handleAddParentFromSuggestion)
-                    .off('input', '.child-search-input')
-                    .on('input', '.child-search-input', CardsController.handleChildSearch)
-                    .off('click', '.child-search-add')
-                    .on('click', '.child-search-add', CardsController.handleAddChild)
-                    .off('click', '.child-suggestion-item')
-                    .on('click', '.child-suggestion-item', CardsController.handleAddChildFromSuggestion)
-                    .off('click', '.bump-text-button')
-                    .on('click', '.bump-text-button', CardsController.handleBumpCard)
-                    .off('click', '.toggle-parent-search')
-                    .on('click', '.toggle-parent-search', CardsController.handleToggleParentSearch)
-                    .off('click', '.toggle-child-search')
-                    .on('click', '.toggle-child-search', CardsController.handleToggleChildSearch)
-                    .off('click', '.toggle-description')
-                    .on('click', '.toggle-description', CardsController.handleToggleDescription);
-            },
-            
-            highlightCard: (cardId) => {
-                const $card = $(`.card[data-card-id="${cardId}"]`);
-                if ($card.length) {
-                    $card.addClass('highlight');
-                    $card.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => $card.removeClass('highlight'), 1500);
-                }
-            },
-            
-            updateCardRelations: (cardId) => {
-                const card = CardsModel.getCard(cardId);
-                if (!card) return;
-                
-                const $card = $(`[data-card-id="${cardId}"]`);
-                if (!$card.length) return;
-                
-                const parentIds = card.parentIds || [];
-                const parents = parentIds.map(id => {
-                    const parentCard = CardsModel.getCard(id);
-                    return parentCard ? { id: parentCard.id, title: parentCard.title } : null;
-                }).filter(Boolean);
-                
-                const parentsListHtml = parents.length > 0 
-                    ? parents.map(parent => `
-                        <div class="card__parent-item">
-                            <span class="mention" data-card-id="${parent.id}">${parent.title}</span>
-                            <button class="action-button remove-parent" data-parent-id="${parent.id}">✕</button>
-                            <button class="action-button remove-with-card" data-card-id="${parent.id}">🗑</button>
-                        </div>
-                    `).join('')
-                    : '';
-                $card.find('.parents-list').html(parentsListHtml);
-                
-                const children = card.children || [];
-                const childrenListHtml = children.length > 0
-                    ? children.map(child => `
-                        <div class="card__child-item">
-                            <span class="child-link" data-card-id="${child.id}">${child.title}</span>
-                            <button class="action-button remove-child" data-child-id="${child.id}">✕</button>
-                            <button class="action-button remove-with-card" data-card-id="${child.id}">🗑</button>
-                        </div>
-                    `).join('')
-                    : '';
-                $card.find('.children-list').html(childrenListHtml);
-            }
-        };
-        
-        // ==================== КОНТРОЛЛЕР КАРТОЧЕК ====================
-        const CardsController = {
-            handleAddCard: function(e) {
-                e.preventDefault();
-                const newCard = CardsModel.addCard();
-                CardsView.render();
-                const $titleInput = $(`[data-card-id="${newCard.id}"] .card__title`);
-                $titleInput.focus();
-                setTimeout(() => {
-                    $(`[data-card-id="${newCard.id}"]`).get(0).scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
+                    .off('click', '#add-card-btn').on('click', '#add-card-btn', ()=>{ const newCard=CardsModel.addCard(); CardsView.render(); setTimeout(()=>CardsView.highlightCard(newCard.id),100); })
+                    .off('click', '#delete-all-btn').on('click', '#delete-all-btn', ()=>{ if(CardsModel.cards.length && confirm("Уничтожить все карточки?")){ CardsModel.deleteAllCards(); $('#cards-container').empty(); } })
+                    .off('click', '.card__header .button--danger').on('click', '.card__header .button--danger', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const card=CardsModel.getCard(cardId); if(confirm(`Уничтожить карточку "${card?.title||'без названия'}"?`)){ CardsModel.deleteCard(cardId); $(this).closest('.card').remove(); } })
+                    .off('input', '.card__title').on('input', '.card__title', function(){ const cardId=$(this).closest('.card').data('card-id'); CardsModel.updateCard(cardId,{ title:$(this).val() }); })
+                    .off('click', '.remove-parent').on('click', '.remove-parent', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const parentId=$(this).data('parent-id'); if(CardsModel.removeParent(cardId,parentId)){ CardsView.updateCardRelations(cardId); CardsView.updateCardRelations(parentId); } })
+                    .off('click', '.remove-child').on('click', '.remove-child', function(e){ e.preventDefault(); const parentId=$(this).closest('.card').data('card-id'); const childId=$(this).data('child-id'); if(CardsModel.removeChild(parentId,childId)){ CardsView.updateCardRelations(parentId); CardsView.updateCardRelations(childId); } })
+                    .off('click', '.remove-with-card').on('click', '.remove-with-card', function(e){ e.preventDefault(); const cardIdToRemove=$(this).data('card-id'); const currentCardId=$(this).closest('.card').data('card-id'); const cardToRemove=CardsModel.getCard(cardIdToRemove); if(cardToRemove && confirm(`Уничтожить карточку "${cardToRemove.title||'без названия'}"?`)){ CardsModel.deleteCard(cardIdToRemove); $(`[data-card-id="${cardIdToRemove}"]`).remove(); CardsView.updateCardRelations(currentCardId); } })
+                    .off('click', '.bump-text-button').on('click', '.bump-text-button', function(e){ e.preventDefault(); const cardId=$(this).data('card-id'); const card=CardsModel.getCard(cardId); if(card){ let oldestDate=new Date(); CardsModel.cards.forEach(c=>{ if(new Date(c.bumpedAt)<oldestDate) oldestDate=new Date(c.bumpedAt); }); card.bumpedAt=new Date(oldestDate.getTime()-1).toISOString(); CardsModel.saveState(); CardsModel.cards.sort((a,b)=>new Date(a.bumpedAt)-new Date(b.bumpedAt)); CardsView.render(); setTimeout(()=>CardsView.highlightCard(cardId),50); } })
+                    .off('click', '.mention, .child-link').on('click', '.mention, .child-link', function(e){ e.preventDefault(); const cardId=$(this).data('card-id'); CardsView.highlightCard(cardId); })
+                    .off('click', '.toggle-parent-search').on('click', '.toggle-parent-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__parents').find('.parent-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.parent-search-input').focus(); })
+                    .off('click', '.toggle-child-search').on('click', '.toggle-child-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__children').find('.child-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.child-search-input').focus(); })
+                    .off('click', '.toggle-description').on('click', '.toggle-description', function(e){ e.preventDefault(); e.stopPropagation(); const $textarea=$(this).closest('.card').find('.card__textarea'); $textarea.toggleClass('visible'); $(this).text($textarea.hasClass('visible') ? 'скрыть' : 'показать'); })
+                    .off('input', '.parent-search-input').on('input', '.parent-search-input', function(){ 
+                        const query=$(this).val().trim(); 
+                        const cardId=$(this).closest('.card').data('card-id'); 
+                        const $suggestions=$(this).closest('.card__parents').find('.parent-suggestions'); 
+                        if(query.length>0){ 
+                            const results=CardsModel.searchCards(query,cardId,true); 
+                            $suggestions.empty(); 
+                            if(results.length>0){ 
+                                results.forEach(card=>{ 
+                                    $suggestions.append(`<div class="suggestion-item parent-suggestion-item" data-card-id="${card.id}">${this.escapeHtml(card.title) || 'Без названия'}</div>`); 
+                                }); 
+                                $suggestions.show(); 
+                            } else $suggestions.hide(); 
+                        } else $suggestions.hide(); 
+                    }.bind(this))
+                    .off('click', '.parent-suggestion-item').on('click', '.parent-suggestion-item', function(){ 
+                        const parentId=$(this).data('card-id'); 
+                        const cardId=$(this).closest('.card').data('card-id'); 
+                        const $input=$(this).closest('.card__parents').find('.parent-search-input'); 
+                        if(CardsModel.addParent(cardId,parentId)){ 
+                            $(this).closest('.suggestions').hide(); 
+                            $input.val('').focus(); 
+                            CardsView.updateCardRelations(cardId); 
+                            CardsView.updateCardRelations(parentId); 
+                        } 
+                    })
+                    .off('click', '.parent-search-add').on('click', '.parent-search-add', function(e){ 
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        const $input=$(this).siblings('.parent-search-input'); 
+                        const query=$input.val().trim(); 
+                        const cardId=$input.closest('.card').data('card-id'); 
+                        const $suggestions=$input.closest('.card__parents').find('.parent-suggestions'); 
+                        if(!query) return; 
+                        if($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length>0){ 
+                            const firstSuggestion=$suggestions.find('.suggestion-item').first(); 
+                            const parentId=firstSuggestion.data('card-id'); 
+                            if(CardsModel.addParent(cardId,parentId)){ 
+                                $suggestions.hide(); 
+                                $input.val(''); 
+                                CardsView.updateCardRelations(cardId); 
+                                CardsView.updateCardRelations(parentId); 
+                                $input.focus(); 
+                            } 
+                        } else { 
+                            const newCard=CardsModel.addCard(query); 
+                            if(CardsModel.addParent(cardId,newCard.id)){ 
+                                $input.val(''); 
+                                CardsView.render(); 
+                                CardsView.updateCardRelations(cardId); 
+                                setTimeout(()=>CardsView.highlightCard(newCard.id),100); 
+                                $input.focus(); 
+                            } 
+                        } 
+                    })
+                    .off('input', '.child-search-input').on('input', '.child-search-input', function(){ 
+                        const query=$(this).val().trim(); 
+                        const cardId=$(this).closest('.card').data('card-id'); 
+                        const $suggestions=$(this).closest('.card__children').find('.child-suggestions'); 
+                        if(query.length>0){ 
+                            const results=CardsModel.searchCards(query,cardId,true); 
+                            $suggestions.empty(); 
+                            if(results.length>0){ 
+                                results.forEach(card=>{ 
+                                    $suggestions.append(`<div class="suggestion-item child-suggestion-item" data-card-id="${card.id}">${this.escapeHtml(card.title) || 'Без названия'}</div>`); 
+                                }); 
+                                $suggestions.show(); 
+                            } else $suggestions.hide(); 
+                        } else $suggestions.hide(); 
+                    }.bind(this))
+                    .off('click', '.child-suggestion-item').on('click', '.child-suggestion-item', function(){ 
+                        const childId=$(this).data('card-id'); 
+                        const parentId=$(this).closest('.card').data('card-id'); 
+                        const $input=$(this).closest('.card__children').find('.child-search-input'); 
+                        if(CardsModel.addChild(parentId,childId)){ 
+                            $(this).closest('.suggestions').hide(); 
+                            $input.val('').focus(); 
+                            CardsView.updateCardRelations(parentId); 
+                            CardsView.updateCardRelations(childId); 
+                        } 
+                    })
+                    .off('click', '.child-search-add').on('click', '.child-search-add', function(e){ 
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        const $input=$(this).siblings('.child-search-input'); 
+                        const query=$input.val().trim(); 
+                        const parentId=$input.closest('.card').data('card-id'); 
+                        const $suggestions=$input.closest('.card__children').find('.child-suggestions'); 
+                        if(!query) return; 
+                        if($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length>0){ 
+                            const firstSuggestion=$suggestions.find('.suggestion-item').first(); 
+                            const childId=firstSuggestion.data('card-id'); 
+                            if(CardsModel.addChild(parentId,childId)){ 
+                                $suggestions.hide(); 
+                                $input.val(''); 
+                                CardsView.updateCardRelations(parentId); 
+                                CardsView.updateCardRelations(childId); 
+                                $input.focus(); 
+                            } 
+                        } else { 
+                            const newCard=CardsModel.addCard(query); 
+                            if(CardsModel.addChild(parentId,newCard.id)){ 
+                                $input.val(''); 
+                                CardsView.render(); 
+                                CardsView.updateCardRelations(parentId); 
+                                setTimeout(()=>CardsView.highlightCard(newCard.id),100); 
+                                $input.focus(); 
+                            } 
+                        } 
                     });
-                }, 100);
             },
             
-            handleDeleteAllCards: function(e) {
-                e.preventDefault();
-                if (CardsModel.cards.length === 0) return;
-                if (confirm("Уничтожить все карточки? Это действие нельзя отменить.")) {
-                    if (CardsModel.deleteAllCards()) {
-                        $('#cards-container').empty();
-                    }
-                }
+            escapeHtml: function(str) { 
+                if(!str) return ''; 
+                return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); 
             },
             
-            handleDeleteCard: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = $(this).closest('.card').data('card-id');
-                const card = CardsModel.getCard(cardId);
-                if (confirm(`Уничтожить карточку "${card.title || 'без названия'}"?`)) {
-                    if (CardsModel.deleteCard(cardId)) {
-                        $(this).closest('.card').remove();
-                        CardsModel.updateAllRelations();
-                    }
-                }
-            },
+            highlightCard: (cardId)=>{ 
+                const $card=$(`.card[data-card-id="${cardId}"]`); 
+                if($card.length){ 
+                    $card.addClass('highlight'); 
+                    $card.get(0).scrollIntoView({ behavior:'smooth', block:'center' }); 
+                    setTimeout(()=>$card.removeClass('highlight'),1500); 
+                } 
+            }, 
             
-            handleCardTitleChange: function() {
-                const cardId = $(this).closest('.card').data('card-id');
-                const newTitle = $(this).val();
-                CardsModel.updateCard(cardId, { title: newTitle });
-            },
-            
-            handleCardContentChange: function() {
-                const cardId = $(this).closest('.card').data('card-id');
-                const content = $(this).val();
-                const card = CardsModel.getCard(cardId);
-                
-                if (card.isEmpty && content.length > 0) {
-                    card.isEmpty = false;
-                    if (card.title === "") {
-                        card.title = card.placeholder;
-                        $(this).closest('.card').find('.card__title').val(card.placeholder);
-                    }
-                }
-                
-                const processedContent = content.replace(/@(\d+)/g, '[[$1]]');
-                CardsModel.updateCard(cardId, { content: processedContent });
-                
-                const $card = $(this).closest('.card');
-                const $toggleButton = $card.find('.toggle-description');
-                if (content.trim()) {
-                    $toggleButton.text('скрыть');
-                    $(this).addClass('visible');
-                } else {
-                    $toggleButton.text('показать');
-                }
-            },
-            
-            handleRemoveParent: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = $(this).closest('.card').data('card-id');
-                const parentId = $(this).data('parent-id');
-                if (CardsModel.removeParent(cardId, parentId)) {
-                    CardsView.updateCardRelations(cardId);
-                    CardsView.updateCardRelations(parentId);
-                }
-            },
-            
-            handleRemoveChild: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const parentId = $(this).closest('.card').data('card-id');
-                const childId = $(this).data('child-id');
-                if (CardsModel.removeChild(parentId, childId)) {
-                    CardsView.updateCardRelations(parentId);
-                    CardsView.updateCardRelations(childId);
-                }
-            },
-            
-            handleRemoveWithCard: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardIdToRemove = $(this).data('card-id');
-                const currentCardId = $(this).closest('.card').data('card-id');
-                const cardToRemove = CardsModel.getCard(cardIdToRemove);
-                if (cardToRemove && confirm(`Уничтожить карточку "${cardToRemove.title || 'без названия'}"?`)) {
-                    if (CardsModel.deleteCard(cardIdToRemove)) {
-                        $(`[data-card-id="${cardIdToRemove}"]`).remove();
-                        const $currentCard = $(`[data-card-id="${currentCardId}"]`);
-                        if ($currentCard.length) {
-                            CardsView.updateCardRelations(currentCardId);
-                        }
-                    }
-                }
-            },
-            
-            handleMentionClick: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = $(this).data('card-id');
-                const cardElement = $(`.card[data-card-id="${cardId}"]`);
-                if (cardElement.length) {
-                    cardElement.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    cardElement.addClass('highlight');
-                    setTimeout(() => cardElement.removeClass('highlight'), 1500);
-                }
-            },
-            
-            handleParentSearch: function(e) {
-                const $input = $(this);
-                const query = $input.val().trim();
-                const cardId = $input.closest('.card').data('card-id');
-                const $suggestions = $input.closest('.card__parents').find('.parent-suggestions');
-                
-                if (query.length > 0) {
-                    const results = CardsModel.searchCards(query, cardId, true);
-                    $suggestions.empty();
-                    if (results.length > 0) {
-                        results.forEach(card => {
-                            $suggestions.append(
-                                `<div class="suggestion-item parent-suggestion-item" data-card-id="${card.id}">${card.title || 'Без названия'}</div>`
-                            );
-                        });
-                        $suggestions.show();
-                    } else {
-                        $suggestions.hide();
-                    }
-                } else {
-                    $suggestions.hide();
-                }
-            },
-            
-            handleChildSearch: function(e) {
-                const $input = $(this);
-                const query = $input.val().trim();
-                const cardId = $input.closest('.card').data('card-id');
-                const $suggestions = $input.closest('.card__children').find('.child-suggestions');
-                
-                if (query.length > 0) {
-                    const results = CardsModel.searchCards(query, cardId, true);
-                    $suggestions.empty();
-                    if (results.length > 0) {
-                        results.forEach(card => {
-                            $suggestions.append(
-                                `<div class="suggestion-item child-suggestion-item" data-card-id="${card.id}">${card.title || 'Без названия'}</div>`
-                            );
-                        });
-                        $suggestions.show();
-                    } else {
-                        $suggestions.hide();
-                    }
-                } else {
-                    $suggestions.hide();
-                }
-            },
-            
-            handleAddParent: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $button = $(this);
-                const $input = $button.siblings('.parent-search-input');
-                const query = $input.val().trim();
-                const cardId = $input.closest('.card').data('card-id');
-                const $suggestions = $input.closest('.card__parents').find('.parent-suggestions');
-                
-                if (!query) return;
-                
-                if ($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length > 0) {
-                    const firstSuggestion = $suggestions.find('.suggestion-item').first();
-                    const parentId = firstSuggestion.data('card-id');
-                    if (CardsModel.addParent(cardId, parentId)) {
-                        $suggestions.hide();
-                        $input.val('');
-                        CardsView.updateCardRelations(cardId);
-                        CardsView.updateCardRelations(parentId);
-                        $input.focus();
-                    }
-                } else {
-                    const newCard = CardsModel.addCard(query);
-                    if (CardsModel.addParent(cardId, newCard.id)) {
-                        $input.val('');
-                        CardsView.render();
-                        CardsView.updateCardRelations(cardId);
-                        setTimeout(() => CardsView.highlightCard(newCard.id), 100);
-                        $input.focus();
-                    }
-                }
-            },
-            
-            handleAddChild: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $button = $(this);
-                const $input = $button.siblings('.child-search-input');
-                const query = $input.val().trim();
-                const parentId = $input.closest('.card').data('card-id');
-                const $suggestions = $input.closest('.card__children').find('.child-suggestions');
-                
-                if (!query) return;
-                
-                if ($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length > 0) {
-                    const firstSuggestion = $suggestions.find('.suggestion-item').first();
-                    const childId = firstSuggestion.data('card-id');
-                    if (CardsModel.addChild(parentId, childId)) {
-                        $suggestions.hide();
-                        $input.val('');
-                        CardsView.updateCardRelations(parentId);
-                        CardsView.updateCardRelations(childId);
-                        $input.focus();
-                    }
-                } else {
-                    const newCard = CardsModel.addCard(query);
-                    if (CardsModel.addChild(parentId, newCard.id)) {
-                        $input.val('');
-                        CardsView.render();
-                        CardsView.updateCardRelations(parentId);
-                        setTimeout(() => CardsView.highlightCard(newCard.id), 100);
-                        $input.focus();
-                    }
-                }
-            },
-            
-            handleAddParentFromSuggestion: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $suggestion = $(this);
-                const parentId = $suggestion.data('card-id');
-                const cardId = $suggestion.closest('.card').data('card-id');
-                const $input = $suggestion.closest('.card__parents').find('.parent-search-input');
-                
-                if (CardsModel.addParent(cardId, parentId)) {
-                    $suggestion.closest('.suggestions').hide();
-                    $input.val('').focus();
-                    CardsView.updateCardRelations(cardId);
-                    CardsView.updateCardRelations(parentId);
-                }
-            },
-            
-            handleAddChildFromSuggestion: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $suggestion = $(this);
-                const childId = $suggestion.data('card-id');
-                const parentId = $suggestion.closest('.card').data('card-id');
-                const $input = $suggestion.closest('.card__children').find('.child-search-input');
-                
-                if (CardsModel.addChild(parentId, childId)) {
-                    $suggestion.closest('.suggestions').hide();
-                    $input.val('').focus();
-                    CardsView.updateCardRelations(parentId);
-                    CardsView.updateCardRelations(childId);
-                }
-            },
-            
-            handleBumpCard: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const cardId = $(this).data('card-id');
-                const card = CardsModel.getCard(cardId);
-                if (!card) return;
-                
-                let oldestDate = new Date();
-                CardsModel.cards.forEach(c => {
-                    const cDate = new Date(c.bumpedAt);
-                    if (cDate < oldestDate) oldestDate = cDate;
-                });
-                
-                const newDate = new Date(oldestDate.getTime() - 1);
-                card.bumpedAt = newDate.toISOString();
-                CardsModel.saveState();
-                CardsModel.cards.sort((a, b) => new Date(a.bumpedAt) - new Date(b.bumpedAt));
-                CardsView.render();
-                
-                setTimeout(() => {
-                    const $card = $(`[data-card-id="${cardId}"]`);
-                    $card.addClass('highlight');
-                    $card.get(0).scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    setTimeout(() => $card.removeClass('highlight'), 1000);
-                }, 50);
-            },
-            
-            handleToggleParentSearch: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $button = $(this);
-                const $searchContainer = $button.closest('.card__parents').find('.parent-search-container');
-                $searchContainer.toggleClass('visible');
-                if ($searchContainer.hasClass('visible')) {
-                    $searchContainer.find('.parent-search-input').focus();
-                }
-            },
-            
-            handleToggleChildSearch: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $button = $(this);
-                const $searchContainer = $button.closest('.card__children').find('.child-search-container');
-                $searchContainer.toggleClass('visible');
-                if ($searchContainer.hasClass('visible')) {
-                    $searchContainer.find('.child-search-input').focus();
-                }
-            },
-            
-            handleToggleDescription: function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const $button = $(this);
-                const $textarea = $button.closest('.card').find('.card__textarea');
-                $textarea.toggleClass('visible');
-                $button.text($textarea.hasClass('visible') ? 'скрыть' : 'показать');
-            }
+            updateCardRelations: (cardId)=>{ 
+                const card=CardsModel.getCard(cardId); 
+                if(!card) return; 
+                const $card=$(`.card[data-card-id="${cardId}"]`); 
+                if(!$card.length) return; 
+                const parents=(card.parentIds||[]).map(id=>{ const p=CardsModel.getCard(id); return p?{ id:p.id, title:p.title }:null; }).filter(Boolean); 
+                $card.find('.parents-list').html(parents.map(p=>`<div class="card__parent-item"><span class="mention" data-card-id="${p.id}">${this.escapeHtml(p.title)}</span><button class="action-button remove-parent" data-parent-id="${p.id}">✕</button><button class="action-button remove-with-card" data-card-id="${p.id}">🗑</button></div>`).join('')); 
+                $card.find('.children-list').html((card.children||[]).map(c=>`<div class="card__child-item"><span class="child-link" data-card-id="${c.id}">${this.escapeHtml(c.title)}</span><button class="action-button remove-child" data-child-id="${c.id}">✕</button><button class="action-button remove-with-card" data-card-id="${c.id}">🗑</button></div>`).join('')); 
+            } 
         };
         
-        // ==================== МОДУЛЬ ИМЕНИ ====================
-        const UserName = {
-            key: 'userName',
-            get: () => localStorage.getItem(UserName.key) || '',
-            save: (name) => {
-                if (name && name.trim()) {
-                    localStorage.setItem(UserName.key, name.trim());
-                    return true;
-                }
-                return false;
-            },
-            has: () => {
-                const name = localStorage.getItem(UserName.key);
-                return name && name.trim().length > 0;
-            },
-            init: () => {
-                if (UserName.has()) {
-                    const name = UserName.get();
-                    $('#userNameDisplay').text(name);
-                    $('#fixedNameButton').show();
-                } else {
-                    $('#nameModal').show();
-                    $('#userNameInput').focus();
-                }
-                
-                $('#saveUserNameBtn').on('click', function() {
-                    const name = $('#userNameInput').val().trim();
-                    if (name) {
-                        UserName.save(name);
-                        $('#nameModal').hide();
-                        $('#userNameDisplay').text(name);
-                        $('#fixedNameButton').show();
-                    } else {
-                        alert('Введите имя');
-                    }
-                });
-                
-                $('#userNameInput').on('keypress', function(e) {
-                    if (e.which === 13) $('#saveUserNameBtn').click();
-                });
-                
-                $('#fixedNameButton').on('click', function() {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            }
+        // ==================== ИМЯ ПОЛЬЗОВАТЕЛЯ ====================
+        let scrollDirection = 0;
+        const UserName = { 
+            key:'userName', 
+            get:()=>localStorage.getItem(UserName.key)||'', 
+            save:(name)=>{ if(name&&name.trim()){ localStorage.setItem(UserName.key,name.trim()); return true; } return false; }, 
+            has:()=>{ const n=localStorage.getItem(UserName.key); return n&&n.trim().length>0; }, 
+            init:()=>{ 
+                if(UserName.has()){ $('#userNameDisplay').text(UserName.get()); $('#fixedNameButton').show(); } 
+                else { $('#nameModal').show(); $('#userNameInput').focus(); } 
+                $('#saveUserNameBtn').on('click',function(){ const name=$('#userNameInput').val().trim(); if(name){ UserName.save(name); $('#nameModal').hide(); $('#userNameDisplay').text(name); $('#fixedNameButton').show(); } else alert('Введите имя'); }); 
+                $('#userNameInput').on('keypress',function(e){ if(e.which===13)$('#saveUserNameBtn').click(); }); 
+                $('#fixedNameButton').on('click', function(){ 
+                    if(scrollDirection === 0 || window.scrollY === 0) { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); scrollDirection = 1; } 
+                    else { window.scrollTo({ top: 0, behavior: 'smooth' }); scrollDirection = 0; } 
+                }); 
+            } 
         };
         
         // ==================== ГЛАВНЫЙ КОНТРОЛЛЕР ====================
-        const AppController = {
-            currentView: 'cards',
-            
-            init: function() {
-                UserName.init();
-                JournalModel.load();
-                CardsModel.loadState();
-                JournalView.render();
-                CardsView.render();
-                this.bindEvents();
-            },
-            
-            bindEvents: function() {
-                $('.tab-btn').on('click', (e) => {
-                    const view = $(e.target).data('view');
-                    this.switchView(view);
-                });
-                
-                $('#floatingBtn').on('click', () => {
-                    $('#createMenu').fadeToggle(200);
-                    setTimeout(() => {
-                        $(document).one('click', () => $('#createMenu').fadeOut(200));
-                    }, 200);
-                });
-                
-                $('#createJournalBtn').on('click', () => {
-                    $('#createMenu').hide();
-                    JournalController.openAddModal();
-                });
-                
-                $('#createCardBtn').on('click', () => {
-                    $('#createMenu').hide();
-                    const newCard = CardsModel.addCard();
-                    this.switchView('cards');
-                    setTimeout(() => CardsView.highlightCard(newCard.id), 100);
-                });
-                
-                $('#globalSearchInput').on('input', (e) => this.handleGlobalSearch(e.target.value));
-                
-                $(document).on('click', (e) => {
-                    if (!$(e.target).closest('.global-search').length) $('#globalSuggestions').hide();
-                    if (!$(e.target).closest('#floatingBtn').length && !$(e.target).closest('#createMenu').length) $('#createMenu').hide();
-                });
-            },
-            
-            switchView: function(view) {
-                this.currentView = view;
-                $('.tab-btn').removeClass('active');
-                $(`.tab-btn[data-view="${view}"]`).addClass('active');
-                $('.view-container').removeClass('active');
-                $(`#${view}View`).addClass('active');
-            },
-            
-            handleGlobalSearch: function(query) {
-                const $suggestions = $('#globalSuggestions');
-                if (!query.trim()) { $suggestions.hide(); return; }
-                
-                const journalResults = JournalModel.searchEntries(query);
-                const cardResults = CardsModel.searchCards(query, null, false);
-                const results = [...journalResults, ...cardResults];
-                
-                if (results.length === 0) {
-                    $suggestions.html('<div class="global-suggestion-item">Ничего не найдено</div>').show();
-                    return;
-                }
-                
-                $suggestions.empty();
-                results.slice(0, 10).forEach(item => {
-                    const typeLabel = item.type === 'journal' ? '📝 Запись' : '📇 Карточка';
-                    $suggestions.append(`
-                        <div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}">
-                            <div>
-                                <span class="suggestion-type ${item.type}">${typeLabel}</span>
-                                <strong>${this.escapeHtml(item.title)}</strong>
-                            </div>
-                            <div style="font-size: 11px; color: #888; margin-top: 4px;">📅 ${item.date}</div>
-                        </div>
-                    `);
-                });
-                $suggestions.show();
-                
-                $('.global-suggestion-item').off('click').on('click', () => {
-                    const id = $(this).data('id');
-                    const type = $(this).data('type');
-                    $('#globalSearchInput').val('');
-                    $('#globalSuggestions').hide();
-                    
-                    if (type === 'journal') {
-                        this.switchView('journal');
-                        setTimeout(() => JournalView.highlightEntryById(id), 100);
-                    } else {
-                        this.switchView('cards');
-                        setTimeout(() => CardsView.highlightCard(id), 100);
-                    }
-                });
-            },
-            
-            escapeHtml: function(str) {
-                if (!str) return '';
-                return str.replace(/[&<>]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    return m;
-                });
-            }
+        const AppController = { 
+            currentView: 'cards', 
+            init: function() { 
+                UserName.init(); 
+                JournalModel.load(); 
+                CardsModel.loadState(); 
+                JournalView.render(); 
+                CardsView.render(); 
+                this.loadViewPreference(); 
+                this.bindEvents(); 
+            }, 
+            bindEvents: function() { 
+                $('#modeSwitchHeader').on('click',()=>{ this.switchView(this.currentView==='cards'?'journal':'cards'); }); 
+                $('#floatingBtn').on('click',()=>{ JournalController.openAddModal(); }); 
+                $('#globalSearchInput').on('input',(e)=>this.handleGlobalSearch(e.target.value)); 
+                $(document).on('click',(e)=>{ if(!$(e.target).closest('.global-search').length)$('#globalSuggestions').hide(); }); 
+            }, 
+            switchView: function(view) { 
+                this.currentView=view; 
+                localStorage.setItem('appViewPreference',view); 
+                $('#modeTitle').text(view==='cards'?'Планетаход':'Дневник'); 
+                $('.view-container').removeClass('active'); 
+                $(`#${view}View`).addClass('active'); 
+                if(view==='journal'){ $('#floatingBtn').show(); $('#fixedNameButton').hide(); } 
+                else { $('#floatingBtn').hide(); $('#fixedNameButton').show(); } 
+            }, 
+            loadViewPreference: function() { 
+                const saved=localStorage.getItem('appViewPreference'); 
+                if(saved && (saved==='cards'||saved==='journal')) this.switchView(saved); 
+                else this.switchView('cards'); 
+            }, 
+            handleGlobalSearch: function(query) { 
+                const $suggestions=$('#globalSuggestions'); 
+                if(!query.trim()){ $suggestions.hide(); return; } 
+                const journalResults=JournalModel.searchEntries(query); 
+                const cardResults=CardsModel.searchCards(query,null,false); 
+                const results=[...journalResults,...cardResults]; 
+                if(results.length===0){ $suggestions.html('<div class="global-suggestion-item">Ничего не найдено</div>').show(); return; } 
+                $suggestions.empty(); 
+                results.slice(0,10).forEach(item=>{ 
+                    const typeLabel=item.type==='journal'?'Запись':'Карточка'; 
+                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type ${item.type}">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date}</div></div>`); 
+                }); 
+                $suggestions.show(); 
+                $('.global-suggestion-item').off('click').on('click',function(){ 
+                    const id=$(this).data('id'); 
+                    const type=$(this).data('type'); 
+                    $('#globalSearchInput').val(''); 
+                    $('#globalSuggestions').hide(); 
+                    if(type==='journal'){ AppController.switchView('journal'); setTimeout(()=>JournalView.highlightEntryById(id),100); } 
+                    else { AppController.switchView('cards'); setTimeout(()=>CardsView.highlightCard(id),100); } 
+                }); 
+            }, 
+            escapeHtml: function(str) { if(!str) return ''; return str.replace(/[&<>]/g,m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); } 
         };
         
-        $(document).ready(() => {
-            AppController.init();
-        });
+        $(document).ready(()=>{ AppController.init(); });
     </script>
 </body>
 </html>
