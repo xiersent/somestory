@@ -39,10 +39,20 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .mode-switch-header:active {
             background: #f5f5f5;
+        }
+
+        .mode-arrow {
+            font-size: 20px;
+            font-weight: 600;
+            color: #666;
+            user-select: none;
         }
 
         .mode-title {
@@ -50,6 +60,8 @@
             font-weight: 600;
             color: #333;
             letter-spacing: -0.3px;
+            flex: 1;
+            text-align: center;
         }
 
         .global-search {
@@ -112,16 +124,8 @@
             border-radius: 4px;
             margin-right: 8px;
             font-weight: 500;
-        }
-
-        .suggestion-type.journal {
             background: #e3f2fd;
             color: #1976d2;
-        }
-
-        .suggestion-type.card {
-            background: #f3e5f5;
-            color: #7b1fa2;
         }
 
         .view-container {
@@ -705,7 +709,9 @@
 <body>
     <div class="app-container">
         <div class="mode-switch-header" id="modeSwitchHeader">
+            <span class="mode-arrow">←</span>
             <div class="mode-title" id="modeTitle">Планетаход</div>
+            <span class="mode-arrow">→</span>
         </div>
 
         <div class="global-search">
@@ -847,9 +853,13 @@
                 <div class="card__footer-content">
                     <span>
                         Создано: <%= createdAt %>
-                        <% if (bumpedAt && new Date(bumpedAt) > new Date(createdAt)) { %>
-                            (поднято <%= new Date(bumpedAt).toLocaleDateString() %> 
-                            <%= new Date(bumpedAt).toLocaleTimeString().slice(0,5) %>)
+                        <% 
+                            const bumped = bumpedAt ? new Date(bumpedAt) : null;
+                            const created = new Date(createdAt);
+                            if (bumped && !isNaN(bumped.getTime()) && bumped > created) { 
+                        %>
+                            (поднято <%= bumped.toLocaleDateString() %> 
+                            <%= bumped.toLocaleTimeString().slice(0,5) %>)
                         <% } %>
                     </span>
                     <button class="bump-text-button" data-card-id="<%= id %>">мне важнее эта</button>
@@ -907,7 +917,7 @@
                 this.bindEvents();
             },
             bindEvents: function() { $('.entry-item').off('click').on('click', function(e) { e.stopPropagation(); const entryId = $(this).data('entry-id'); if(entryId) JournalController.openEditModal(entryId); }); },
-            highlightEntryById: function(entryId) { const $entry = $(`.entry-item[data-entry-id="${entryId}"]`); if($entry.length) { $entry.addClass('highlight'); setTimeout(() => $entry.removeClass('highlight'),1000); $entry.get(0).scrollIntoView({ behavior:'smooth', block:'center' }); } }
+            highlightEntryById: function(entryId) { const $entry = $(`.entry-item[data-entry-id="${entryId}"]`); if($entry.length) { $entry.addClass('highlight'); setTimeout(() => $entry.removeClass('highlight'),1000); $entry.get(0).scrollIntoView({ behavior: 'auto', block: 'center' }); } }
         };
         
         // ==================== КОНТРОЛЛЕР ДНЕВНИКА ====================
@@ -932,7 +942,7 @@
         // ==================== МОДЕЛЬ КАРТОЧЕК (Планетаход) ====================
         const CardsModel = { 
             cards: [], 
-            generateId: () => Date.now(), 
+            generateId: () => Date.now() + Math.random() * 10000, 
             saveState: () => localStorage.setItem('cardsSystem', JSON.stringify(CardsModel.cards)),
             
             addCard: (initialTitle='') => { 
@@ -1160,8 +1170,16 @@
             
             bindEvents: () => { 
                 $(document)
-                    .off('click', '#add-card-btn').on('click', '#add-card-btn', ()=>{ const newCard=CardsModel.addCard(); CardsView.render(); setTimeout(()=>CardsView.highlightCard(newCard.id),100); })
-                    .off('click', '#delete-all-btn').on('click', '#delete-all-btn', ()=>{ if(CardsModel.cards.length && confirm("Уничтожить все карточки?")){ CardsModel.deleteAllCards(); $('#cards-container').empty(); } })
+                    .off('click', '#add-card-btn').on('click', '#add-card-btn', ()=>{ 
+                        const newCard=CardsModel.addCard(); 
+                        CardsView.render(); 
+                        setTimeout(()=>CardsView.highlightCard(newCard.id),100);
+                        // Обновляем все поисковые поля для новых карточек
+                        $('.parent-search-input, .child-search-input').off('input').on('input', function(){ 
+                            CardsView.handleSearchInput($(this)); 
+                        });
+                    })
+                    .off('click', '#delete-all-btn').on('click', '#delete-all-btn', ()=>{ if(CardsModel.cards.length && confirm("Уничтожить все карточки?")){ CardsModel.deleteAllCards(); CardsView.render(); } })
                     .off('click', '.card__header .button--danger').on('click', '.card__header .button--danger', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const card=CardsModel.getCard(cardId); if(confirm(`Уничтожить карточку "${card?.title||'без названия'}"?`)){ CardsModel.deleteCard(cardId); $(this).closest('.card').remove(); } })
                     .off('input', '.card__title').on('input', '.card__title', function(){ const cardId=$(this).closest('.card').data('card-id'); CardsModel.updateCard(cardId,{ title:$(this).val() }); })
                     .off('click', '.remove-parent').on('click', '.remove-parent', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const parentId=$(this).data('parent-id'); if(CardsModel.removeParent(cardId,parentId)){ CardsView.updateCardRelations(cardId); CardsView.updateCardRelations(parentId); } })
@@ -1172,21 +1190,7 @@
                     .off('click', '.toggle-parent-search').on('click', '.toggle-parent-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__parents').find('.parent-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.parent-search-input').focus(); })
                     .off('click', '.toggle-child-search').on('click', '.toggle-child-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__children').find('.child-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.child-search-input').focus(); })
                     .off('click', '.toggle-description').on('click', '.toggle-description', function(e){ e.preventDefault(); e.stopPropagation(); const $textarea=$(this).closest('.card').find('.card__textarea'); $textarea.toggleClass('visible'); $(this).text($textarea.hasClass('visible') ? 'скрыть' : 'показать'); })
-                    .off('input', '.parent-search-input').on('input', '.parent-search-input', function(){ 
-                        const query=$(this).val().trim(); 
-                        const cardId=$(this).closest('.card').data('card-id'); 
-                        const $suggestions=$(this).closest('.card__parents').find('.parent-suggestions'); 
-                        if(query.length>0){ 
-                            const results=CardsModel.searchCards(query,cardId,true); 
-                            $suggestions.empty(); 
-                            if(results.length>0){ 
-                                results.forEach(card=>{ 
-                                    $suggestions.append(`<div class="suggestion-item parent-suggestion-item" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
-                                }); 
-                                $suggestions.show(); 
-                            } else $suggestions.hide(); 
-                        } else $suggestions.hide(); 
-                    })
+                    .off('input', '.parent-search-input').on('input', '.parent-search-input', function(){ CardsView.handleSearchInput($(this)); })
                     .off('click', '.parent-suggestion-item').on('click', '.parent-suggestion-item', function(){ 
                         const parentId=$(this).data('card-id'); 
                         const cardId=$(this).closest('.card').data('card-id'); 
@@ -1227,21 +1231,7 @@
                             } 
                         } 
                     })
-                    .off('input', '.child-search-input').on('input', '.child-search-input', function(){ 
-                        const query=$(this).val().trim(); 
-                        const cardId=$(this).closest('.card').data('card-id'); 
-                        const $suggestions=$(this).closest('.card__children').find('.child-suggestions'); 
-                        if(query.length>0){ 
-                            const results=CardsModel.searchCards(query,cardId,true); 
-                            $suggestions.empty(); 
-                            if(results.length>0){ 
-                                results.forEach(card=>{ 
-                                    $suggestions.append(`<div class="suggestion-item child-suggestion-item" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
-                                }); 
-                                $suggestions.show(); 
-                            } else $suggestions.hide(); 
-                        } else $suggestions.hide(); 
-                    })
+                    .off('input', '.child-search-input').on('input', '.child-search-input', function(){ CardsView.handleSearchInput($(this)); })
                     .off('click', '.child-suggestion-item').on('click', '.child-suggestion-item', function(){ 
                         const childId=$(this).data('card-id'); 
                         const parentId=$(this).closest('.card').data('card-id'); 
@@ -1284,6 +1274,24 @@
                     });
             },
             
+            handleSearchInput: function($input) {
+                const query=$input.val().trim(); 
+                const cardId=$input.closest('.card').data('card-id'); 
+                const isParent=$input.hasClass('parent-search-input');
+                const $suggestions=$input.closest(isParent ? '.card__parents' : '.card__children').find(isParent ? '.parent-suggestions' : '.child-suggestions');
+                
+                if(query.length>0){ 
+                    const results=CardsModel.searchCards(query,cardId,true); 
+                    $suggestions.empty(); 
+                    if(results.length>0){ 
+                        results.forEach(card=>{ 
+                            $suggestions.append(`<div class="suggestion-item ${isParent ? 'parent-suggestion-item' : 'child-suggestion-item'}" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
+                        }); 
+                        $suggestions.show(); 
+                    } else $suggestions.hide(); 
+                } else $suggestions.hide(); 
+            },
+            
             escapeHtml: function(str) { 
                 if(!str) return ''; 
                 return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); 
@@ -1293,7 +1301,7 @@
                 const $card=$(`.card[data-card-id="${cardId}"]`); 
                 if($card.length){ 
                     $card.addClass('highlight'); 
-                    $card.get(0).scrollIntoView({ behavior:'smooth', block:'center' }); 
+                    $card.get(0).scrollIntoView({ behavior: 'auto', block: 'center' }); 
                     setTimeout(()=>$card.removeClass('highlight'),1500); 
                 } 
             }, 
@@ -1315,13 +1323,21 @@
             get:()=>localStorage.getItem(UserName.key)||'', 
             save:(name)=>{ if(name&&name.trim()){ localStorage.setItem(UserName.key,name.trim()); return true; } return false; }, 
             has:()=>{ const n=localStorage.getItem(UserName.key); return n&&n.trim().length>0; }, 
+            scrollDirection: 'up',
             init:()=>{ 
                 if(UserName.has()){ $('#userNameDisplay').text(UserName.get()); $('#fixedNameButton').show(); } 
                 else { $('#nameModal').show(); $('#userNameInput').focus(); } 
                 $('#saveUserNameBtn').on('click',function(){ const name=$('#userNameInput').val().trim(); if(name){ UserName.save(name); $('#nameModal').hide(); $('#userNameDisplay').text(name); $('#fixedNameButton').show(); } else alert('Введите имя'); }); 
                 $('#userNameInput').on('keypress',function(e){ if(e.which===13)$('#saveUserNameBtn').click(); }); 
                 $('#fixedNameButton').on('click', function(){ 
-                    window.scrollTo({ top: 0, behavior: 'auto' });
+                    const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 50;
+                    if (isAtBottom || UserName.scrollDirection === 'down') {
+                        window.scrollTo({ top: 0, behavior: 'auto' });
+                        UserName.scrollDirection = 'up';
+                    } else {
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+                        UserName.scrollDirection = 'down';
+                    }
                 }); 
             } 
         };
@@ -1368,7 +1384,7 @@
                 $suggestions.empty(); 
                 results.slice(0,10).forEach(item=>{ 
                     const typeLabel=item.type==='journal'?'Запись':'Карточка'; 
-                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type ${item.type}">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date || ''}</div></div>`); 
+                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date || ''}</div></div>`); 
                 }); 
                 $suggestions.show(); 
                 $('.global-suggestion-item').off('click').on('click',function(){ 
