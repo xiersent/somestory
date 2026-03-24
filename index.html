@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Планетаход + Дневник</title>
+    <title>Заразка</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ejs@3.1.8/ejs.min.js"></script>
     <style>
@@ -455,13 +455,14 @@
             background: white;
             border: 1px solid #ddd;
             border-radius: 6px;
-            width: 100%;
+            width: calc(100% - 24px);
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             margin-top: 2px;
+            left: 12px;
         }
 
         .suggestion-item {
@@ -1022,7 +1023,6 @@
             },
             
             updateAllRelations: () => { 
-                // Обновляем mentions
                 CardsModel.cards.forEach(card=>card.mentions=[]); 
                 CardsModel.cards.forEach(sourceCard=>{ 
                     const matches=sourceCard.content.match(/\[\[(\d+)\]\]/g)||[]; 
@@ -1033,7 +1033,6 @@
                     }); 
                 }); 
                 
-                // Обновляем children
                 CardsModel.cards.forEach(card=>{ card.children=[]; }); 
                 CardsModel.cards.forEach(card=>{ 
                     if(card.parentIds) card.parentIds.forEach(parentId=>{ 
@@ -1045,7 +1044,6 @@
             
             getCard: (cardId) => CardsModel.cards.find(c=>c.id==cardId),
             
-            // Рекурсивный поиск всех родительских ID
             getAllParentIds: (cardId) => { 
                 const all=new Set(); 
                 const queue=[cardId]; 
@@ -1062,7 +1060,6 @@
                 return Array.from(all); 
             },
             
-            // Рекурсивный поиск всех дочерних ID
             getAllChildIds: (cardId) => { 
                 const all=new Set(); 
                 const queue=[cardId]; 
@@ -1093,7 +1090,7 @@
                     id:card.id, 
                     type:'card', 
                     title:card.title, 
-                    date:new Date(card.createdAt).toLocaleDateString('ru-RU') 
+                    date: card.createdAt ? new Date(card.createdAt).toLocaleDateString('ru-RU') : '' 
                 })); 
             },
             
@@ -1109,7 +1106,7 @@
                             if(!c.bumpedAt) c.bumpedAt=c.createdAt?new Date(c.createdAt).toISOString():new Date().toISOString(); 
                             if(c.isEmpty===undefined) c.isEmpty=(c.title===""); 
                             if(!c.placeholder && c.isEmpty) {
-                                const date = new Date(c.createdAt || Date.now());
+                                const date = c.createdAt ? new Date(c.createdAt) : new Date();
                                 c.placeholder = `Карточка от ${date.toLocaleDateString()} ${date.toLocaleTimeString().slice(0,5)}`;
                             }
                             if(!c.placeholder && !c.isEmpty) c.placeholder = c.title || "Карточка";
@@ -1184,12 +1181,12 @@
                             $suggestions.empty(); 
                             if(results.length>0){ 
                                 results.forEach(card=>{ 
-                                    $suggestions.append(`<div class="suggestion-item parent-suggestion-item" data-card-id="${card.id}">${this.escapeHtml(card.title) || 'Без названия'}</div>`); 
+                                    $suggestions.append(`<div class="suggestion-item parent-suggestion-item" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
                                 }); 
                                 $suggestions.show(); 
                             } else $suggestions.hide(); 
                         } else $suggestions.hide(); 
-                    }.bind(this))
+                    })
                     .off('click', '.parent-suggestion-item').on('click', '.parent-suggestion-item', function(){ 
                         const parentId=$(this).data('card-id'); 
                         const cardId=$(this).closest('.card').data('card-id'); 
@@ -1239,12 +1236,12 @@
                             $suggestions.empty(); 
                             if(results.length>0){ 
                                 results.forEach(card=>{ 
-                                    $suggestions.append(`<div class="suggestion-item child-suggestion-item" data-card-id="${card.id}">${this.escapeHtml(card.title) || 'Без названия'}</div>`); 
+                                    $suggestions.append(`<div class="suggestion-item child-suggestion-item" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
                                 }); 
                                 $suggestions.show(); 
                             } else $suggestions.hide(); 
                         } else $suggestions.hide(); 
-                    }.bind(this))
+                    })
                     .off('click', '.child-suggestion-item').on('click', '.child-suggestion-item', function(){ 
                         const childId=$(this).data('card-id'); 
                         const parentId=$(this).closest('.card').data('card-id'); 
@@ -1307,13 +1304,12 @@
                 const $card=$(`.card[data-card-id="${cardId}"]`); 
                 if(!$card.length) return; 
                 const parents=(card.parentIds||[]).map(id=>{ const p=CardsModel.getCard(id); return p?{ id:p.id, title:p.title }:null; }).filter(Boolean); 
-                $card.find('.parents-list').html(parents.map(p=>`<div class="card__parent-item"><span class="mention" data-card-id="${p.id}">${this.escapeHtml(p.title)}</span><button class="action-button remove-parent" data-parent-id="${p.id}">✕</button><button class="action-button remove-with-card" data-card-id="${p.id}">🗑</button></div>`).join('')); 
-                $card.find('.children-list').html((card.children||[]).map(c=>`<div class="card__child-item"><span class="child-link" data-card-id="${c.id}">${this.escapeHtml(c.title)}</span><button class="action-button remove-child" data-child-id="${c.id}">✕</button><button class="action-button remove-with-card" data-card-id="${c.id}">🗑</button></div>`).join('')); 
+                $card.find('.parents-list').html(parents.map(p=>`<div class="card__parent-item"><span class="mention" data-card-id="${p.id}">${CardsView.escapeHtml(p.title)}</span><button class="action-button remove-parent" data-parent-id="${p.id}">✕</button><button class="action-button remove-with-card" data-card-id="${p.id}">🗑</button></div>`).join('')); 
+                $card.find('.children-list').html((card.children||[]).map(c=>`<div class="card__child-item"><span class="child-link" data-card-id="${c.id}">${CardsView.escapeHtml(c.title)}</span><button class="action-button remove-child" data-child-id="${c.id}">✕</button><button class="action-button remove-with-card" data-card-id="${c.id}">🗑</button></div>`).join('')); 
             } 
         };
         
         // ==================== ИМЯ ПОЛЬЗОВАТЕЛЯ ====================
-        let scrollDirection = 0;
         const UserName = { 
             key:'userName', 
             get:()=>localStorage.getItem(UserName.key)||'', 
@@ -1325,8 +1321,7 @@
                 $('#saveUserNameBtn').on('click',function(){ const name=$('#userNameInput').val().trim(); if(name){ UserName.save(name); $('#nameModal').hide(); $('#userNameDisplay').text(name); $('#fixedNameButton').show(); } else alert('Введите имя'); }); 
                 $('#userNameInput').on('keypress',function(e){ if(e.which===13)$('#saveUserNameBtn').click(); }); 
                 $('#fixedNameButton').on('click', function(){ 
-                    if(scrollDirection === 0 || window.scrollY === 0) { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); scrollDirection = 1; } 
-                    else { window.scrollTo({ top: 0, behavior: 'smooth' }); scrollDirection = 0; } 
+                    window.scrollTo({ top: 0, behavior: 'auto' });
                 }); 
             } 
         };
@@ -1373,7 +1368,7 @@
                 $suggestions.empty(); 
                 results.slice(0,10).forEach(item=>{ 
                     const typeLabel=item.type==='journal'?'Запись':'Карточка'; 
-                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type ${item.type}">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date}</div></div>`); 
+                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type ${item.type}">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date || ''}</div></div>`); 
                 }); 
                 $suggestions.show(); 
                 $('.global-suggestion-item').off('click').on('click',function(){ 
