@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тестирование FlashModule - диагностика звука</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            text-align: center;
+            color: white;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #a0aec0;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .status-card {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-row:last-child {
+            border-bottom: none;
+        }
+        
+        .status-label {
+            color: #cbd5e0;
+            font-weight: 500;
+        }
+        
+        .status-value {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .status-value.success {
+            color: #48bb78;
+        }
+        
+        .status-value.error {
+            color: #f56565;
+        }
+        
+        .status-value.warning {
+            color: #ed8936;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 16px 24px;
+            border-radius: 50px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .log-area {
+            background: rgba(0,0,0,0.6);
+            border-radius: 16px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #e2e8f0;
+        }
+        
+        .log-entry.info {
+            color: #90cdf4;
+        }
+        
+        .log-entry.success {
+            color: #9ae6b4;
+        }
+        
+        .log-entry.error {
+            color: #fc8181;
+        }
+        
+        .log-entry.warning {
+            color: #fbd38d;
+        }
+        
+        .flash-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.01s;
+            z-index: 9999;
+        }
+        
+        .test-sound-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .test-sound-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .file-check {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge.success {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .badge.error {
+            background: #f56565;
+            color: white;
+        }
+        
+        .badge.warning {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .volume-slider {
+            width: 100%;
+            margin: 12px 0;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔦 FlashModule Тест</h1>
+        <div class="subtitle">Тестирование вспышки и звука из /sounds/scanner_photo1.wav</div>
+        
+        <div class="status-card">
+            <div class="status-row">
+                <span class="status-label">📹 Камера:</span>
+                <span class="status-value" id="cameraStatus">—</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">🔊 Torch API:</span>
+                <span class="status-value" id="torchStatus">—</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">🎵 Звуковой файл:</span>
+                <span class="status-value" id="soundFileStatus">—</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">🎚️ Громкость:</span>
+                <span class="status-value" id="volumeValue">0.8</span>
+            </div>
+        </div>
+        
+        <div class="test-sound-card">
+            <div class="test-sound-title">🎵 Тестирование звука без вспышки</div>
+            <div class="button-group">
+                <button id="testSoundOnlyBtn" class="btn-secondary">▶️ Только звук (файл)</button>
+                <button id="testBuiltinSoundBtn" class="btn-secondary">🎹 Только звук (встроенный)</button>
+            </div>
+            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
+            <div class="file-check" id="fileCheckDisplay">
+                🔍 Проверка файла...
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button id="playBtn" class="btn-primary">⚡ ВСПЫШКА + ЗВУК (файл)</button>
+            <button id="playBuiltinBtn" class="btn-primary">⚡ ВСПЫШКА + ЗВУК (встроенный)</button>
+            <button id="flashOnlyBtn" class="btn-danger">💡 Только вспышка</button>
+            <button id="releaseBtn" class="btn-secondary">🔒 Освободить камеру</button>
+            <button id="reinitBtn" class="btn-secondary">🔄 Переинициализировать</button>
+        </div>
+        
+        <div class="log-area" id="logArea">
+            <div class="log-entry info">🚀 Модуль загружен, начинаем тестирование...</div>
+        </div>
+    </div>
+    
+    <div class="flash-indicator" id="flashIndicator"></div>
+    
+    <script src="flash-module.js"></script>
+    <script>
+        // Создаем глобальный экземпляр модуля
+        let flashModule = null;
+        let testLogs = [];
+        
+        // DOM элементы
+        const cameraStatusEl = document.getElementById('cameraStatus');
+        const torchStatusEl = document.getElementById('torchStatus');
+        const soundFileStatusEl = document.getElementById('soundFileStatus');
+        const volumeValueEl = document.getElementById('volumeValue');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const logArea = document.getElementById('logArea');
+        const flashIndicator = document.getElementById('flashIndicator');
+        
+        // Функция логирования
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            // Ограничиваем количество логов
+            while (logArea.children.length > 100) {
+                logArea.removeChild(logArea.firstChild);
+            }
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        // Визуальная вспышка
+        function visualFlash(duration = 200) {
+            flashIndicator.style.transition = `opacity ${duration}ms`;
+            flashIndicator.style.opacity = '1';
+            setTimeout(() => {
+                flashIndicator.style.opacity = '0';
+            }, duration);
+        }
+        
+        // Проверка существования файла
+        async function checkSoundFile() {
+            const soundUrl = '/sounds/scanner_photo1.wav';
+            addLog(`🔍 Проверка файла: ${soundUrl}`, 'info');
+            
+            try {
+                const response = await fetch(soundUrl, { method: 'HEAD' });
+                if (response.ok) {
+                    addLog(`✅ Файл найден! Размер: ${response.headers.get('content-length') || 'неизвестен'} байт`, 'success');
+                    soundFileStatusEl.innerHTML = '<span class="badge success">✅ Файл найден</span><br><span style="font-size:11px">/sounds/scanner_photo1.wav</span>';
+                    
+                    // Дополнительная проверка: пробуем загрузить кусочек
+                    try {
+                        const testFetch = await fetch(soundUrl);
+                        const blob = await testFetch.blob();
+                        addLog(`📊 Тип файла: ${blob.type}, размер: ${blob.size} байт`, 'info');
+                        if (blob.size === 0) {
+                            addLog(`⚠️ Файл пустой (0 байт)!`, 'warning');
+                        }
+                    } catch(e) {
+                        addLog(`⚠️ Не удалось загрузить файл для проверки: ${e.message}`, 'warning');
+                    }
+                    
+                    return true;
+                } else {
+                    addLog(`❌ Файл не найден! Статус: ${response.status}`, 'error');
+                    soundFileStatusEl.innerHTML = '<span class="badge error">❌ Файл НЕ найден</span><br><span style="font-size:11px">/sounds/scanner_photo1.wav</span>';
+                    return false;
+                }
+            } catch(e) {
+                addLog(`❌ Ошибка проверки файла: ${e.message}`, 'error');
+                soundFileStatusEl.innerHTML = '<span class="badge error">⚠️ Ошибка проверки</span>';
+                return false;
+            }
+        }
+        
+        // Обновление статуса камеры
+        async function updateCameraStatus() {
+            if (!flashModule) return;
+            
+            if (flashModule.torchReady && flashModule.videoTrack) {
+                cameraStatusEl.innerHTML = '<span class="badge success">✅ Готова</span>';
+                torchStatusEl.innerHTML = '<span class="badge success">✅ Поддерживается</span>';
+            } else if (flashModule.videoTrack) {
+                cameraStatusEl.innerHTML = '<span class="badge warning">⚠️ Инициализация...</span>';
+                torchStatusEl.innerHTML = '<span class="badge warning">⚠️ Проверка...</span>';
+            } else {
+                cameraStatusEl.innerHTML = '<span class="badge warning">⏳ Не инициализирована</span>';
+                torchStatusEl.innerHTML = '<span class="badge warning">❓ Неизвестно</span>';
+            }
+        }
+        
+        // Тест только звука (файл)
+        async function testSoundOnly() {
+            addLog(`🎵 Тестирование звукового файла...`, 'info');
+            
+            if (!flashModule) {
+                addLog(`❌ Модуль не инициализирован`, 'error');
+                return;
+            }
+            
+            // Принудительно используем файл
+            flashModule.useBuiltin = false;
+            flashModule.options.soundFile = 'scanner_photo1.wav';
+            
+            addLog(`🔊 Воспроизведение: /sounds/scanner_photo1.wav`, 'info');
+            addLog(`💡 Совет: проверьте, что звук не на беззвучном режиме и громкость не на минимуме`, 'warning');
+            
+            const startTime = Date.now();
+            const result = await flashModule.playSound('scanner_photo1.wav');
+            const duration = Date.now() - startTime;
+            
+            if (result) {
+                addLog(`✅ Звук успешно воспроизведён! Длительность: ${duration}мс`, 'success');
+            } else {
+                addLog(`❌ Звук НЕ воспроизвёлся!`, 'error');
+                addLog(`🔧 Возможные причины:`, 'error');
+                addLog(`   1. Файл повреждён или имеет неподдерживаемый формат`, 'error');
+                addLog(`   2. Путь к файлу неверный (должен быть /sounds/scanner_photo1.wav)`, 'error');
+                addLog(`   3. Браузер блокирует автоматическое воспроизведение аудио`, 'error');
+                addLog(`   4. Формат WAV может не поддерживаться в некоторых браузерах`, 'error');
+                
+                // Пробуем альтернативный способ
+                addLog(`🔄 Пробуем альтернативный способ воспроизведения...`, 'info');
+                const audio = new Audio('/sounds/scanner_photo1.wav');
+                audio.volume = volumeSlider.value;
+                audio.play().then(() => {
+                    addLog(`✅ Альтернативный способ сработал!`, 'success');
+                    setTimeout(() => audio.pause(), 3000);
+                }).catch(err => {
+                    addLog(`❌ Альтернативный способ тоже не сработал: ${err.message}`, 'error');
+                });
+            }
+        }
+        
+        // Тест встроенного звука
+        async function testBuiltinSound() {
+            addLog(`🎹 Тестирование встроенного синтезированного звука...`, 'info');
+            
+            if (!flashModule) {
+                addLog(`❌ Модуль не инициализирован`, 'error');
+                return;
+            }
+            
+            const oldUseBuiltin = flashModule.useBuiltin;
+            flashModule.useBuiltin = true;
+            
+            const result = await flashModule.playSound();
+            
+            if (result) {
+                addLog(`✅ Встроенный звук успешно воспроизведён`, 'success');
+            } else {
+                addLog(`❌ Встроенный звук не воспроизвёлся (Web Audio API может быть заблокирован)`, 'error');
+            }
+            
+            flashModule.useBuiltin = oldUseBuiltin;
+        }
+        
+        // Полный тест со вспышкой
+        async function testFullPlay(useBuiltin = false) {
+            if (!flashModule) {
+                addLog(`❌ Модуль не инициализирован`, 'error');
+                return;
+            }
+            
+            addLog(`🎬 Запуск: ${useBuiltin ? 'встроенный звук' : 'файл scanner_photo1.wav'} + вспышка`, 'info');
+            
+            if (!useBuiltin) {
+                flashModule.useBuiltin = false;
+                flashModule.options.soundFile = 'scanner_photo1.wav';
+            } else {
+                flashModule.useBuiltin = true;
+            }
+            
+            // Добавляем визуальный индикатор для теста
+            const startTime = Date.now();
+            
+            // Слушатели событий для отладки
+            const soundStartHandler = (sound) => {
+                addLog(`🔊 Звук начал воспроизводиться: ${sound}`, 'success');
+            };
+            
+            const soundEndHandler = () => {
+                addLog(`🔇 Звук закончился`, 'info');
+            };
+            
+            const flashStartHandler = (duration) => {
+                addLog(`💡 Вспышка включена на ${duration}мс`, 'info');
+                visualFlash(duration);
+            };
+            
+            const flashEndHandler = () => {
+                addLog(`💡 Вспышка выключена`, 'info');
+            };
+            
+            flashModule.options.onSoundStart = soundStartHandler;
+            flashModule.options.onSoundEnd = soundEndHandler;
+            flashModule.options.onFlashStart = flashStartHandler;
+            flashModule.options.onFlashEnd = flashEndHandler;
+            
+            const result = await flashModule.play();
+            const totalTime = Date.now() - startTime;
+            
+            if (result) {
+                addLog(`✅ Тест успешно завершён! Общее время: ${totalTime}мс`, 'success');
+            } else {
+                addLog(`❌ Тест не удался`, 'error');
+            }
+            
+            // Очищаем слушатели
+            setTimeout(() => {
+                flashModule.options.onSoundStart = null;
+                flashModule.options.onSoundEnd = null;
+                flashModule.options.onFlashStart = null;
+                flashModule.options.onFlashEnd = null;
+            }, 1000);
+        }
+        
+        // Только вспышка
+        async function testFlashOnly() {
+            if (!flashModule) {
+                addLog(`❌ Модуль не инициализирован`, 'error');
+                return;
+            }
+            
+            addLog(`💡 Тестирование только вспышки...`, 'info');
+            
+            const success = await flashModule.initCamera();
+            if (!success) {
+                addLog(`❌ Не удалось инициализировать камеру`, 'error');
+                return;
+            }
+            
+            addLog(`✨ Вспышка на ${flashModule.options.flashDuration}мс`, 'info');
+            visualFlash(flashModule.options.flashDuration);
+            
+            const result = await flashModule.blink();
+            if (result) {
+                addLog(`✅ Вспышка сработала`, 'success');
+            } else {
+                addLog(`❌ Вспышка не сработала`, 'error');
+            }
+        }
+        
+        // Инициализация
+        async function init() {
+            addLog(`🚀 Инициализация FlashModule...`, 'info');
+            
+            // Проверяем поддержку
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                addLog(`❌ Ваш браузер не поддерживает getUserMedia API`, 'error');
+                addLog(`💡 Используйте Chrome на Android для поддержки вспышки`, 'warning');
+                return;
+            }
+            
+            flashModule = new FlashModule({
+                soundPath: '/sounds/',
+                soundFile: 'scanner_photo1.wav',
+                flashDuration: 200,
+                soundVolume: 0.8,
+                useBuiltinSound: true,
+                builtinSoundDuration: 2000,
+                builtinSoundFrequency: 880,
+                debug: true,
+                onReady: () => {
+                    addLog(`✅ Камера готова, вспышка доступна`, 'success');
+                    updateCameraStatus();
+                },
+                onError: (err) => {
+                    addLog(`❌ Ошибка камеры: ${err.message}`, 'error');
+                    updateCameraStatus();
+                }
+            });
+            
+            // Проверяем файл
+            await checkSoundFile();
+            
+            // Обновляем статус
+            updateCameraStatus();
+            
+            // Пробуем инициализировать камеру в фоне
+            setTimeout(() => {
+                if (!flashModule.torchReady) {
+                    addLog(`🔄 Фоновая инициализация камеры...`, 'info');
+                    flashModule.initCamera().catch(e => {
+                        addLog(`⚠️ Фоновая инициализация не удалась: ${e.message}`, 'warning');
+                    });
+                }
+            }, 1000);
+        }
+        
+        // Настройка обработчиков
+        function setupEventHandlers() {
+            document.getElementById('playBtn').onclick = () => testFullPlay(false);
+            document.getElementById('playBuiltinBtn').onclick = () => testFullPlay(true);
+            document.getElementById('flashOnlyBtn').onclick = () => testFlashOnly();
+            document.getElementById('testSoundOnlyBtn').onclick = () => testSoundOnly();
+            document.getElementById('testBuiltinSoundBtn').onclick = () => testBuiltinSound();
+            document.getElementById('releaseBtn').onclick = () => {
+                if (flashModule) {
+                    flashModule.releaseCamera();
+                    addLog(`🔒 Камера освобождена`, 'info');
+                    updateCameraStatus();
+                }
+            };
+            document.getElementById('reinitBtn').onclick = async () => {
+                if (flashModule) {
+                    await flashModule.releaseCamera();
+                    await flashModule.initCamera();
+                    addLog(`🔄 Камера переинициализирована`, 'info');
+                    updateCameraStatus();
+                }
+            };
+            
+            volumeSlider.oninput = (e) => {
+                const vol = parseFloat(e.target.value);
+                if (flashModule) {
+                    flashModule.setVolume(vol);
+                }
+                volumeValueEl.textContent = vol.toFixed(2);
+                addLog(`🎚️ Громкость изменена на ${vol.toFixed(2)}`, 'info');
+            };
+        }
+        
+        // Запуск
+        init();
+        setupEventHandlers();
+        
+        // Дополнительная диагностика
+        window.addEventListener('load', () => {
+            addLog(`📱 User Agent: ${navigator.userAgent}`, 'info');
+            addLog(`🔊 Проверка AudioContext: ${window.AudioContext ? 'доступен' : 'недоступен'}`, 'info');
+        });
+    </script>
+</body>
+</html>
