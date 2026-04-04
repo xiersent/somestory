@@ -2,1404 +2,435 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Заразка</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ejs@3.1.8/ejs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Фонарик на сайте | Вспышка телефона</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f5f5;
             min-height: 100vh;
-            padding: 16px;
-            padding-bottom: 90px;
-            line-height: 1.5;
-            overflow-y: scroll;
-        }
-
-        .app-container {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .mode-switch-header {
-            background: #fff;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .mode-switch-header:active {
-            background: #f5f5f5;
-        }
-
-        .mode-arrow {
-            font-size: 20px;
-            font-weight: 600;
-            color: #666;
-            user-select: none;
-        }
-
-        .mode-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-            letter-spacing: -0.3px;
-            flex: 1;
-            text-align: center;
-        }
-
-        .global-search {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .global-search__input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 15px;
-            background: #fff;
-            transition: all 0.2s;
-        }
-
-        .global-search__input:focus {
-            outline: none;
-            border-color: #999;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
-        }
-
-        .global-search__suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            max-height: 400px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            margin-top: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .global-suggestion-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-            transition: background 0.1s;
-        }
-
-        .global-suggestion-item:last-child {
-            border-bottom: none;
-        }
-
-        .global-suggestion-item:hover {
-            background: #f9f9f9;
-        }
-
-        .suggestion-type {
-            display: inline-block;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 8px;
-            font-weight: 500;
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .view-container {
-            display: none;
-        }
-
-        .view-container.active {
-            display: block;
-        }
-
-        .journal {
-            width: 100%;
-        }
-
-        .days-container {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .day-group {
-            background: #fff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-        }
-
-        .day-group__header {
-            padding: 16px 20px;
-            text-align: center;
-            background: #fafafa;
-            border-bottom: 1px solid #efefef;
-        }
-
-        .day-group__date {
-            font-weight: 600;
-            font-size: 18px;
-            color: #333;
-        }
-
-        .day-group__weekday {
-            font-size: 13px;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .entries-list {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .entry-item {
-            padding: 16px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .entry-item:last-child {
-            border-bottom: none;
-        }
-
-        .entry-item:hover {
-            background: #f9f9f9;
-        }
-
-        .entry-item.highlight {
-            background: #fff9c4;
-            animation: highlightPulse 0.6s ease;
-        }
-
-        @keyframes highlightPulse {
-            0% { background: #fff3bf; }
-            100% { background: #fff9c4; }
-        }
-
-        .entry-item__content {
-            font-size: 15px;
-            line-height: 1.5;
-            color: #333;
-            word-break: break-word;
-            white-space: pre-wrap;
-        }
-
-        .entry-item__footer {
-            margin-top: 8px;
-            font-size: 11px;
-            color: #bbb;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: #fff;
-            border-radius: 16px;
-            color: #aaa;
-        }
-
-        .cards-system {
-            width: 100%;
-        }
-
-        .cards-system__controls {
-            display: flex;
-            flex-direction: row;
-            gap: 6px;
-            margin-bottom: 16px;
-            width: 100%;
             justify-content: center;
-        }
-
-        .button {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 400;
-            cursor: pointer;
-            background: #e0e0e0;
-            color: #333;
-            height: 36px;
-            line-height: 1;
-            display: inline-flex;
             align-items: center;
-            justify-content: center;
-        }
-
-        .cards-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            padding: 0;
-            width: 100%;
+            font-family: system-ui, 'Segoe UI', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            padding: 20px;
         }
 
         .card {
-            background: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #ddd;
+            background: rgba(18, 25, 45, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 64px;
+            padding: 32px 24px 40px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             width: 100%;
-        }
-
-        .card__parents {
-            margin-bottom: 10px;
-            position: relative;
-            width: 100%;
-        }
-
-        .card__header {
-            display: flex;
-            flex-direction: row;
-            gap: 6px;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-
-        .card__title {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fff;
-            min-height: 36px;
-        }
-
-        .card__title:focus {
-            outline: none;
-            border-color: #999;
-        }
-
-        .card__content {
-            margin: 12px 0;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .card__textarea {
-            width: 100%;
-            min-height: 100px;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            resize: vertical;
-            background: #fff;
-            font-family: inherit;
-            display: none;
-        }
-
-        .card__textarea.visible {
-            display: block;
-        }
-
-        .card__footer {
-            font-size: 11px;
-            color: #999;
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px solid #eee;
-        }
-
-        .card__footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .bump-text-button {
-            background: none;
-            border: none;
-            color: inherit;
-            font: inherit;
-            cursor: pointer;
-            padding: 0;
-            margin-left: 8px;
-        }
-
-        .card__parents-title,
-        .card__children-title {
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #666;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .card__description-title {
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: #666;
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .add-text-button {
-            background: none;
-            border: none;
-            color: #666;
-            font: inherit;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-        .parents-list,
-        .children-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin: 6px 0;
-            width: 100%;
-        }
-
-        .card__parent-item,
-        .card__child-item {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            background: #f8f8f8;
-            border-radius: 6px;
-            font-size: 13px;
-            border: 1px solid #ddd;
-            gap: 8px;
-            min-height: 36px;
-        }
-
-        .mention,
-        .child-link {
-            flex: 1;
-            min-width: 0;
-            word-break: break-word;
-            color: #666;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .action-button {
-            cursor: pointer;
-            font-weight: normal;
-            font-size: 14px;
-            padding: 0 8px;
-            border-radius: 4px;
-            background: #e0e0e0;
-            border: 1px solid #ccc;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 28px;
-            color: #333;
-        }
-
-        .search-container {
-            display: flex;
-            flex-direction: row;
-            gap: 6px;
-            margin-bottom: 6px;
-            width: 100%;
-            display: none;
-        }
-
-        .search-container.visible {
-            display: flex;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 0 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fff;
-            height: 36px;
-        }
-
-        .suggestions {
-            position: absolute;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            width: calc(100% - 24px);
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            margin-top: 2px;
-            left: 12px;
-        }
-
-        .suggestion-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 13px;
-            border-bottom: 1px solid #f0f0f0;
-            min-height: 36px;
-        }
-
-        .card.highlight {
-            background: #fff9c4;
-        }
-
-        .plus {
-            transform: rotate(45deg);
-            display: inline-block;
-        }
-
-        .floating-add-button {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 56px;
-            height: 56px;
-            background: #333;
-            border: none;
-            border-radius: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            max-width: 380px;
+            text-align: center;
             transition: all 0.2s ease;
-            z-index: 1000;
-            font-size: 28px;
-            font-weight: 400;
-            color: white;
-            line-height: 1;
         }
 
-        .floating-add-button:active {
-            transform: translateX(-50%) scale(0.94);
-        }
-
-        .fixed-name-button {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #e0e0e0;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 30px;
-            padding: 8px 20px;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 1000;
-            text-align: center;
-            height: 40px;
-            white-space: nowrap;
-            min-width: 160px;
-            transition: all 0.2s;
-        }
-
-        .fixed-name-button:active {
-            transform: translateX(-50%) scale(0.96);
-        }
-
-        .fullscreen-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #fff;
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            animation: slideUp 0.2s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .fullscreen-modal__header {
-            padding: 20px 20px 16px 20px;
-            border-bottom: 1px solid #efefef;
-            background: #fff;
-            flex-shrink: 0;
-        }
-
-        .fullscreen-modal__title {
-            font-size: 20px;
+        h1 {
+            font-size: 1.9rem;
             font-weight: 600;
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #FFFFFF, #B0C4FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
         }
 
-        .fullscreen-modal__actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
+        .sub {
+            color: #8e9bb5;
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+            border-bottom: 1px dashed #2a334e;
+            display: inline-block;
+            padding-bottom: 6px;
         }
 
-        .fullscreen-modal__button {
-            flex: 1;
-            padding: 10px 16px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            background: #fff;
-            color: #333;
-            text-align: center;
-        }
-
-        .fullscreen-modal__button--save {
-            background: #333;
-            border-color: #333;
-            color: white;
-        }
-
-        .fullscreen-modal__button--delete {
-            border-color: #ffccc7;
-            color: #d4380d;
-        }
-
-        .fullscreen-modal__content {
-            flex: 1;
-            padding: 20px;
+        .flash-btn {
+            background: #1e2a3e;
+            border: none;
+            width: 180px;
+            height: 180px;
+            border-radius: 180px;
+            margin: 16px auto 24px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            overflow-y: auto;
-        }
-
-        .fullscreen-modal__datetime {
-            display: flex;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .fullscreen-modal__datetime-input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            font-family: inherit;
-            background: #fafafa;
-            text-align: center;
-        }
-
-        .fullscreen-modal__textarea-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .fullscreen-modal__textarea {
-            width: 100%;
-            flex: 1;
-            padding: 14px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 15px;
-            font-family: inherit;
-            resize: none;
-            background: #fafafa;
-        }
-
-        .name-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-        }
-
-        .name-modal__content {
-            background: white;
-            padding: 16px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .name-modal__title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .name-modal__input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-
-        .name-modal__button {
-            width: 100%;
-            padding: 8px 10px;
-            background: #e0e0e0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
             cursor: pointer;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.05);
+            transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.4, 1.1), background 0.2s, box-shadow 0.2s;
+            touch-action: manipulation;
         }
 
-        @media (max-width: 600px) {
-            body {
-                padding: 12px;
-                padding-bottom: 90px;
+        .flash-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Иконка лампочки/вспышки */
+        .icon {
+            font-size: 68px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            transition: transform 0.2s;
+        }
+
+        .btn-text {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #eef5ff;
+            text-shadow: 0 1px 2px black;
+        }
+
+        /* Активное состояние (фонарик включен) */
+        .flash-btn.active {
+            background: radial-gradient(circle at 30% 20%, #ffdd77, #ffaa33);
+            box-shadow: 0 0 28px 6px rgba(255, 200, 50, 0.7), inset 0 1px 4px rgba(255,255,200,0.8);
+        }
+
+        .flash-btn.active .icon {
+            transform: scale(1.02);
+            filter: drop-shadow(0 0 12px gold);
+        }
+
+        .flash-btn.active .btn-text {
+            color: #2c1e0a;
+            text-shadow: 0 0 2px #ffd58c;
+        }
+
+        .status {
+            margin-top: 24px;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 18px;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            color: #ccddf8;
+            font-weight: 500;
+            display: inline-block;
+            width: auto;
+        }
+
+        .warning {
+            background: rgba(220, 90, 60, 0.25);
+            margin-top: 28px;
+            font-size: 0.75rem;
+            padding: 10px 14px;
+            border-radius: 32px;
+            color: #ffb7a0;
+            border-left: 3px solid #ff884d;
+            text-align: left;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #5f6c8a;
+        }
+
+        button {
+            background: none;
+            border: none;
+        }
+
+        @media (max-width: 480px) {
+            .flash-btn {
+                width: 150px;
+                height: 150px;
             }
-            
-            .fullscreen-modal__actions {
-                flex-wrap: nowrap;
+            .icon {
+                font-size: 54px;
             }
-            
-            .fullscreen-modal__datetime {
-                flex-direction: row;
+            .btn-text {
+                font-size: 1.4rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="mode-switch-header" id="modeSwitchHeader">
-            <span class="mode-arrow">←</span>
-            <div class="mode-title" id="modeTitle">Планетаход</div>
-            <span class="mode-arrow">→</span>
-        </div>
 
-        <div class="global-search">
-            <input type="text" id="globalSearchInput" class="global-search__input" 
-                   placeholder="Поиск по всем записям и карточкам..." autocomplete="off">
-            <div id="globalSuggestions" class="global-search__suggestions"></div>
-        </div>
+<div class="card">
+    <h1>🔦 Вспышка</h1>
+    <div class="sub">управление фонариком</div>
 
-        <div id="cardsView" class="view-container active">
-            <div class="cards-system">
-                <div class="cards-system__controls">
-                    <button class="button button--primary" id="add-card-btn">Создать карточку</button>
-                    <button class="button button--danger" id="delete-all-btn">Уничтожить все</button>
-                </div>
-                <div class="cards-container" id="cards-container"></div>
-            </div>
-        </div>
-
-        <div id="journalView" class="view-container">
-            <div class="journal">
-                <div class="days-container" id="daysContainer"></div>
-            </div>
-        </div>
-    </div>
-
-    <button class="floating-add-button" id="floatingBtn">+</button>
-    <button class="fixed-name-button" id="fixedNameButton" style="display: none;">
-        <span id="userNameDisplay"></span>
+    <button id="flashButton" class="flash-btn" aria-label="Включить вспышку">
+        <div class="icon">💡</div>
+        <span class="btn-text" id="buttonLabel">ВКЛ</span>
     </button>
 
-    <div class="name-modal" id="nameModal" style="display: none;">
-        <div class="name-modal__content">
-            <div class="name-modal__title">Введите ваше имя</div>
-            <input type="text" class="name-modal__input" id="userNameInput" placeholder="Имя" maxlength="50">
-            <button class="name-modal__button" id="saveUserNameBtn">Сохранить</button>
-        </div>
+    <div class="status" id="statusMessage">
+        ⚡ Нажмите, чтобы включить фонарик
     </div>
 
-    <script type="text/ejs" id="dayGroupTemplate">
-        <div class="day-group" data-date="<%= date %>">
-            <div class="day-group__header">
-                <div class="day-group__date"><%= formattedDate %></div>
-                <div class="day-group__weekday"><%= weekday %></div>
-            </div>
-            <div class="entries-list">
-                <% entries.forEach(function(entry) { %>
-                    <div class="entry-item" data-entry-id="<%= entry.id %>">
-                        <div class="entry-item__content"><%= entry.text %></div>
-                        <div class="entry-item__footer"><%= entry.time %></div>
-                    </div>
-                <% }); %>
-            </div>
-        </div>
-    </script>
+    <div class="warning">
+        📱 <strong>Важно для работы:</strong><br>
+        • Сайт должен быть открыт через <strong>HTTPS</strong> (или localhost)<br>
+        • Разрешите доступ к камере при запросе<br>
+        • Работает в Chrome на Android, некоторые браузеры iOS не поддерживают torch
+    </div>
+    <div class="footer">
+        Torch API • MediaStream
+    </div>
+</div>
 
-    <script type="text/ejs" id="emptyTemplate">
-        <div class="empty-state">
-            <div class="empty-state__text">Нет записей</div>
-            <div class="empty-state__text" style="font-size: 13px; margin-top: 8px;">Нажмите + внизу, чтобы добавить</div>
-        </div>
-    </script>
+<script>
+    (function() {
+        // DOM элементы
+        const flashBtn = document.getElementById('flashButton');
+        const btnLabelSpan = document.getElementById('buttonLabel');
+        const statusDiv = document.getElementById('statusMessage');
 
-    <script type="text/ejs" id="card-template">
-        <div class="card" data-card-id="<%= id %>">
-            <div class="card__parents">
-                <div class="card__parents-title">
-                    Родительские карточки:
-                    <button class="add-text-button toggle-parent-search">добавить</button>
-                </div>
-                <div class="search-container parent-search-container">
-                    <input type="text" class="search-input parent-search-input" placeholder="Поиск родительских карточек..." data-card-id="<%= id %>">
-                    <button class="button button--success parent-search-add"><span class="plus">✕</span></button>
-                </div>
-                <div class="suggestions parent-suggestions"></div>
-                
-                <div class="parents-list">
-                    <% parents.forEach(function(parent) { %>
-                        <div class="card__parent-item">
-                            <span class="mention" data-card-id="<%= parent.id %>"><%= parent.title %></span>
-                            <button class="action-button remove-parent" data-parent-id="<%= parent.id %>">✕</button>
-                            <button class="action-button remove-with-card" data-card-id="<%= parent.id %>">🗑</button>
-                        </div>
-                    <% }); %>
-                </div>
-            </div>
-            
-            <div class="card__header">
-                <input type="text" class="card__title" value="<%= title %>" placeholder="<%= placeholder %>">
-                <button class="button button--danger">✕</button>
-            </div>
-            
-            <div class="card__content">
-                <div class="card__description-title">
-                    Описание:
-                    <button class="add-text-button toggle-description">
-                        <% if (content && content.trim()) { %>скрыть<% } else { %>показать<% } %>
-                    </button>
-                </div>
-                
-                <textarea class="card__textarea <%= (content && content.trim()) ? 'visible' : '' %>" placeholder="Содержание карточки..."><%= content %></textarea>
-                
-                <div class="card__children">
-                    <div class="card__children-title">
-                        Дочерние карточки:
-                        <button class="add-text-button toggle-child-search">добавить</button>
-                    </div>
-                    <div class="search-container child-search-container">
-                        <input type="text" class="search-input child-search-input" placeholder="Поиск дочерних карточек..." data-card-id="<%= id %>">
-                        <button class="button button--success child-search-add"><span class="plus">✕</span></button>
-                    </div>
-                    <div class="suggestions child-suggestions"></div>
-                    
-                    <div class="children-list">
-                        <% children.forEach(function(child) { %>
-                            <div class="card__child-item">
-                                <span class="child-link" data-card-id="<%= child.id %>"><%= child.title %></span>
-                                <button class="action-button remove-child" data-child-id="<%= child.id %>">✕</button>
-                                <button class="action-button remove-with-card" data-card-id="<%= child.id %>">🗑</button>
-                            </div>
-                        <% }); %>
-                    </div>
-                </div>
-                
-                <% if (mentions.length > 0) { %>
-                    <div class="card__mentions">
-                        <div class="card__mentions-title">Упоминается в:</div>
-                        <% mentions.forEach(function(mention) { %>
-                            <div class="card__mention-item">
-                                <span class="mention" data-card-id="<%= mention.sourceCard.id %>">
-                                    <%= mention.sourceCard.title %>
-                                </span>
-                            </div>
-                        <% }); %>
-                    </div>
-                <% } %>
-            </div>
-            
-            <div class="card__footer">
-                <div class="card__footer-content">
-                    <span>
-                        Создано: <%= createdAt %>
-                        <% 
-                            const bumped = bumpedAt ? new Date(bumpedAt) : null;
-                            const created = new Date(createdAt);
-                            if (bumped && !isNaN(bumped.getTime()) && bumped > created) { 
-                        %>
-                            (поднято <%= bumped.toLocaleDateString() %> 
-                            <%= bumped.toLocaleTimeString().slice(0,5) %>)
-                        <% } %>
-                    </span>
-                    <button class="bump-text-button" data-card-id="<%= id %>">мне важнее эта</button>
-                </div>
-            </div>
-        </div>
-    </script>
+        // Состояния
+        let isFlashOn = false;          // горит ли фонарик сейчас
+        let mediaStream = null;         // текущий видеопоток
+        let videoTrack = null;           // видеотрек для управления torch
+        let torchSupported = false;      // флаг, поддерживается ли torch в данном браузере
 
-    <script>
-        // ==================== МОДЕЛЬ ДНЕВНИКА ====================
-        const JournalModel = {
-            entries: [],
-            generateId: () => Date.now() + Math.random() * 10000,
-            load: function() {
-                const saved = localStorage.getItem('journal_entries_v6');
-                if (saved) { try { this.entries = JSON.parse(saved); this.sortEntries(); } catch(e) { } }
-                if (this.entries.length === 0) {
-                    const today = new Date(), todayStr = today.toISOString().slice(0,10);
-                    const yesterday = new Date(Date.now() - 86400000), yesterdayStr = yesterday.toISOString().slice(0,10);
-                    this.entries.push({ id: this.generateId(), date: yesterdayStr, text: "Первая запись! Здесь можно вести дневник. Записи группируются по датам.", createdAt: yesterday.toISOString() });
-                    this.entries.push({ id: this.generateId(), date: todayStr, text: "Сегодняшний день. Нажмите + внизу, чтобы добавить новую запись.", createdAt: today.toISOString() });
-                    this.save();
+        // Функция обновления интерфейса
+        function updateUI() {
+            if (isFlashOn) {
+                flashBtn.classList.add('active');
+                btnLabelSpan.innerText = 'ВЫКЛ';
+                statusDiv.innerHTML = '🔆 ФОНАРИК ВКЛЮЧЕН 🔆';
+                statusDiv.style.background = "rgba(255, 200, 50, 0.2)";
+                statusDiv.style.color = "#fff3cf";
+            } else {
+                flashBtn.classList.remove('active');
+                btnLabelSpan.innerText = 'ВКЛ';
+                if (torchSupported) {
+                    statusDiv.innerHTML = '⚡ Фонарик выключен. Нажмите снова.';
+                } else {
+                    statusDiv.innerHTML = '⚠️ Torch не поддерживается в этом браузере/ОС (нужен Chrome на Android)';
                 }
-            },
-            sortEntries: function() { this.entries.sort((a,b) => { if(a.date !== b.date) return a.date.localeCompare(b.date); return new Date(a.createdAt) - new Date(b.createdAt); }); },
-            save: function() { this.sortEntries(); localStorage.setItem('journal_entries_v6', JSON.stringify(this.entries)); },
-            getGroupedEntries: function() {
-                const groups = new Map();
-                this.entries.forEach(entry => { if(!groups.has(entry.date)) groups.set(entry.date, []); groups.get(entry.date).push(entry); });
-                const result = [];
-                for(let [date, entries] of groups.entries()) {
-                    const formattedEntries = entries.map(entry => ({ ...entry, time: new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }) }));
-                    const dateObj = new Date(date);
-                    result.push({ date, formattedDate: dateObj.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' }), weekday: dateObj.toLocaleDateString('ru-RU', { weekday:'long' }), entries: formattedEntries });
-                }
-                result.sort((a,b) => a.date.localeCompare(b.date));
-                return result;
-            },
-            addEntry: function(date, time, text) { if(!text || !text.trim()) return null; const createdAt = new Date(`${date}T${time}:00`); const newEntry = { id: this.generateId(), date, text: text.trim(), createdAt: createdAt.toISOString() }; this.entries.push(newEntry); this.save(); return newEntry; },
-            updateEntry: function(id, date, time, newText) { const entry = this.entries.find(e => e.id == id); if(entry && newText && newText.trim()) { const createdAt = new Date(`${date}T${time}:00`); entry.text = newText.trim(); entry.date = date; entry.createdAt = createdAt.toISOString(); this.save(); return true; } return false; },
-            deleteEntry: function(id) { const index = this.entries.findIndex(e => e.id == id); if(index !== -1) { this.entries.splice(index,1); this.save(); return true; } return false; },
-            searchEntries: function(query) { if(!query || !query.trim()) return []; const lowerQuery = query.toLowerCase().trim(); return this.entries.filter(entry => entry.text.toLowerCase().includes(lowerQuery)).map(entry => ({ id: entry.id, type:'journal', title: entry.text.substring(0,50) + (entry.text.length>50?'...':''), date: new Date(entry.date).toLocaleDateString('ru-RU') })); },
-            getTodayDate: function() { return new Date().toISOString().slice(0,10); },
-            getCurrentTime: function() { const now = new Date(); return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; },
-            getEntryById: function(id) { return this.entries.find(e => e.id == id); }
-        };
-        
-        // ==================== ПРЕДСТАВЛЕНИЕ ДНЕВНИКА ====================
-        const JournalView = {
-            render: function() {
-                const groups = JournalModel.getGroupedEntries();
-                const $container = $('#daysContainer'); $container.empty();
-                if(groups.length === 0) { $container.html(ejs.render($('#emptyTemplate').text(), {})); return; }
-                groups.forEach(group => { $container.append(ejs.render($('#dayGroupTemplate').text(), group)); });
-                this.bindEvents();
-            },
-            bindEvents: function() { $('.entry-item').off('click').on('click', function(e) { e.stopPropagation(); const entryId = $(this).data('entry-id'); if(entryId) JournalController.openEditModal(entryId); }); },
-            highlightEntryById: function(entryId) { const $entry = $(`.entry-item[data-entry-id="${entryId}"]`); if($entry.length) { $entry.addClass('highlight'); setTimeout(() => $entry.removeClass('highlight'),1000); $entry.get(0).scrollIntoView({ behavior: 'auto', block: 'center' }); } }
-        };
-        
-        // ==================== КОНТРОЛЛЕР ДНЕВНИКА ====================
-        const JournalController = {
-            openAddModal: function() { this.showFullscreenModal({ title:'Новая запись', dateValue: JournalModel.getTodayDate(), timeValue: JournalModel.getCurrentTime(), textValue:'', showDelete:false, onSave: (date,time,text) => { if(text && text.trim()) { const newEntry = JournalModel.addEntry(date,time,text); if(newEntry) { JournalView.render(); setTimeout(() => JournalView.highlightEntryById(newEntry.id),100); } return true; } return false; } }); },
-            openEditModal: function(entryId) { const entry = JournalModel.getEntryById(entryId); if(!entry) return; const entryTime = new Date(entry.createdAt).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }); this.showFullscreenModal({ title:'Редактировать запись', dateValue:entry.date, timeValue:entryTime, textValue:entry.text, showDelete:true, onSave: (date,time,text) => { if(text && text.trim()) { JournalModel.updateEntry(entryId,date,time,text); JournalView.render(); setTimeout(() => JournalView.highlightEntryById(entryId),100); return true; } return false; }, onDelete: () => { if(confirm('Уничтожить эту запись?')) { JournalModel.deleteEntry(entryId); JournalView.render(); return true; } return false; } }); },
-            showFullscreenModal: function(options) {
-                const modalId = 'fullscreenModal_' + Date.now();
-                const deleteButtonHtml = options.showDelete ? '<button class="fullscreen-modal__button fullscreen-modal__button--delete" id="deleteBtn">Уничтожить</button>' : '';
-                const modalHtml = `<div class="fullscreen-modal" id="${modalId}"><div class="fullscreen-modal__header"><div class="fullscreen-modal__title">${options.title}</div><div class="fullscreen-modal__actions"><button class="fullscreen-modal__button fullscreen-modal__button--save" id="saveBtn">Сохранить</button>${deleteButtonHtml}<button class="fullscreen-modal__button" id="cancelBtn">Отмена</button></div></div><div class="fullscreen-modal__content"><div class="fullscreen-modal__datetime"><input type="date" id="dateInput" class="fullscreen-modal__datetime-input" value="${options.dateValue}"><input type="time" id="timeInput" class="fullscreen-modal__datetime-input" value="${options.timeValue}"></div><div class="fullscreen-modal__textarea-wrapper"><textarea id="textInput" class="fullscreen-modal__textarea" placeholder="Введите текст...">${this.escapeHtml(options.textValue)}</textarea></div></div></div>`;
-                $('body').append(modalHtml); const $modal = $('#'+modalId); const $dateInput=$modal.find('#dateInput'), $timeInput=$modal.find('#timeInput'), $textInput=$modal.find('#textInput');
-                setTimeout(() => $textInput.focus(),100);
-                const closeModal = () => { $modal.remove(); };
-                $modal.find('#saveBtn').on('click',()=>{ const date=$dateInput.val(), time=$timeInput.val(), text=$textInput.val(); if(!date||!time){alert('Заполните дату и время'); return;} if(options.onSave(date,time,text)) closeModal(); else if(!text.trim()) alert('Запись не может быть пустой'); });
-                if(options.showDelete) $modal.find('#deleteBtn').on('click',()=>{ if(options.onDelete()) closeModal(); });
-                $modal.find('#cancelBtn').on('click',closeModal);
-                $(document).on('keydown.'+modalId, (e)=>{ if(e.key==='Escape') { closeModal(); $(document).off('keydown.'+modalId); } });
-            },
-            escapeHtml: function(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
-        };
-        
-        // ==================== МОДЕЛЬ КАРТОЧЕК (Планетаход) ====================
-        const CardsModel = { 
-            cards: [], 
-            generateId: () => Date.now() + Math.random() * 10000, 
-            saveState: () => localStorage.setItem('cardsSystem', JSON.stringify(CardsModel.cards)),
-            
-            addCard: (initialTitle='') => { 
-                const now=new Date(); 
-                const placeholder = `Карточка от ${now.toLocaleDateString()} ${now.toLocaleTimeString().slice(0,5)}`; 
-                const newCard={ 
-                    id:CardsModel.generateId(), 
-                    title:initialTitle||"", 
-                    placeholder, 
-                    content:"", 
-                    parentIds:[], 
-                    mentions:[], 
-                    children:[], 
-                    createdAt:now.toLocaleString(), 
-                    bumpedAt:now.toISOString(), 
-                    isEmpty:!initialTitle 
-                }; 
-                CardsModel.cards.push(newCard); 
-                CardsModel.saveState(); 
-                CardsModel.updateAllRelations(); 
-                return newCard; 
-            },
-            
-            updateCard: (cardId, updates) => { 
-                const card=CardsModel.getCard(cardId); 
-                if(card){ 
-                    Object.assign(card,updates); 
-                    CardsModel.saveState(); 
-                    CardsModel.updateAllRelations(); 
-                    return true; 
-                } 
-                return false; 
-            },
-            
-            addParent: (cardId, parentId) => { 
-                const card=CardsModel.getCard(cardId), parentCard=CardsModel.getCard(parentId); 
-                if(card && parentCard && cardId!=parentId && !(card.parentIds||[]).some(id=>id==parentId)){ 
-                    if(!card.parentIds) card.parentIds=[]; 
-                    card.parentIds.push(parentId); 
-                    if(card.isEmpty){ 
-                        card.isEmpty=false; 
-                        card.title=card.placeholder; 
-                    } 
-                    CardsModel.saveState(); 
-                    CardsModel.updateAllRelations(); 
-                    return true; 
-                } 
-                return false; 
-            },
-            
-            addChild: (parentId, childId) => CardsModel.addParent(childId, parentId),
-            
-            removeParent: (cardId, parentId) => { 
-                const card=CardsModel.getCard(cardId); 
-                if(card && card.parentIds){ 
-                    const idx=card.parentIds.findIndex(id=>id==parentId); 
-                    if(idx!==-1){ 
-                        card.parentIds.splice(idx,1); 
-                        CardsModel.saveState(); 
-                        CardsModel.updateAllRelations(); 
-                        return true; 
-                    } 
-                } 
-                return false; 
-            },
-            
-            removeChild: (parentId, childId) => CardsModel.removeParent(childId, parentId),
-            
-            deleteCard: (cardId) => { 
-                const idx=CardsModel.cards.findIndex(c=>c.id==cardId); 
-                if(idx!==-1){ 
-                    CardsModel.cards.forEach(card=>{ 
-                        if(card.parentIds) card.parentIds=card.parentIds.filter(id=>id!=cardId); 
-                    }); 
-                    CardsModel.cards.splice(idx,1); 
-                    CardsModel.saveState(); 
-                    CardsModel.updateAllRelations(); 
-                    return true; 
-                } 
-                return false; 
-            },
-            
-            deleteAllCards: () => { 
-                if(CardsModel.cards.length===0) return false; 
-                CardsModel.cards=[]; 
-                CardsModel.saveState(); 
-                return true; 
-            },
-            
-            updateAllRelations: () => { 
-                CardsModel.cards.forEach(card=>card.mentions=[]); 
-                CardsModel.cards.forEach(sourceCard=>{ 
-                    const matches=sourceCard.content.match(/\[\[(\d+)\]\]/g)||[]; 
-                    matches.forEach(match=>{ 
-                        const cardId=match.match(/\d+/)[0]; 
-                        const targetCard=CardsModel.getCard(cardId); 
-                        if(targetCard) targetCard.mentions.push({ sourceCard:{ id:sourceCard.id, title:sourceCard.title }, context:sourceCard.content }); 
-                    }); 
-                }); 
-                
-                CardsModel.cards.forEach(card=>{ card.children=[]; }); 
-                CardsModel.cards.forEach(card=>{ 
-                    if(card.parentIds) card.parentIds.forEach(parentId=>{ 
-                        const parentCard=CardsModel.getCard(parentId); 
-                        if(parentCard) parentCard.children.push({ id:card.id, title:card.title }); 
-                    }); 
-                }); 
-            },
-            
-            getCard: (cardId) => CardsModel.cards.find(c=>c.id==cardId),
-            
-            getAllParentIds: (cardId) => { 
-                const all=new Set(); 
-                const queue=[cardId]; 
-                while(queue.length){ 
-                    const cur=queue.shift(); 
-                    const curCard=CardsModel.getCard(cur); 
-                    if(curCard && curCard.parentIds) curCard.parentIds.forEach(pid=>{ 
-                        if(!all.has(pid)){ 
-                            all.add(pid); 
-                            queue.push(pid); 
-                        } 
-                    }); 
-                } 
-                return Array.from(all); 
-            },
-            
-            getAllChildIds: (cardId) => { 
-                const all=new Set(); 
-                const queue=[cardId]; 
-                while(queue.length){ 
-                    const cur=queue.shift(); 
-                    const curCard=CardsModel.getCard(cur); 
-                    if(curCard && curCard.children) curCard.children.forEach(child=>{ 
-                        if(!all.has(child.id)){ 
-                            all.add(child.id); 
-                            queue.push(child.id); 
-                        } 
-                    }); 
-                } 
-                return Array.from(all); 
-            },
-            
-            searchCards: (query, excludeCardId, excludeChildren=false) => { 
-                if(!query) return []; 
-                let excludeIds=excludeCardId?[excludeCardId]:[]; 
-                if(excludeCardId){ 
-                    excludeIds=excludeIds.concat(CardsModel.getAllParentIds(excludeCardId)); 
-                    if(excludeChildren) excludeIds=excludeIds.concat(CardsModel.getAllChildIds(excludeCardId)); 
-                } 
-                return CardsModel.cards.filter(card=> 
-                    card.title.toLowerCase().includes(query.toLowerCase()) && 
-                    !excludeIds.includes(card.id)
-                ).map(card=>({ 
-                    id:card.id, 
-                    type:'card', 
-                    title:card.title, 
-                    date: card.createdAt ? new Date(card.createdAt).toLocaleDateString('ru-RU') : '' 
-                })); 
-            },
-            
-            loadState: () => { 
-                const saved=localStorage.getItem('cardsSystem'); 
-                if(saved){ 
-                    try{ 
-                        CardsModel.cards=JSON.parse(saved); 
-                        CardsModel.cards.forEach(c=>{ 
-                            if(!c.parentIds) c.parentIds=[]; 
-                            if(!c.children) c.children=[]; 
-                            if(!c.mentions) c.mentions=[]; 
-                            if(!c.bumpedAt) c.bumpedAt=c.createdAt?new Date(c.createdAt).toISOString():new Date().toISOString(); 
-                            if(c.isEmpty===undefined) c.isEmpty=(c.title===""); 
-                            if(!c.placeholder && c.isEmpty) {
-                                const date = c.createdAt ? new Date(c.createdAt) : new Date();
-                                c.placeholder = `Карточка от ${date.toLocaleDateString()} ${date.toLocaleTimeString().slice(0,5)}`;
-                            }
-                            if(!c.placeholder && !c.isEmpty) c.placeholder = c.title || "Карточка";
-                        }); 
-                        CardsModel.cards.sort((a,b)=>new Date(a.bumpedAt)-new Date(b.bumpedAt)); 
-                        CardsModel.updateAllRelations(); 
-                    }catch(e){} 
-                } else { 
-                    const id1=CardsModel.generateId(), id2=CardsModel.generateId(); 
-                    CardsModel.cards.push({ 
-                        id:id1, 
-                        title:"Планетаход", 
-                        placeholder:"Карточка", 
-                        content:"Это главная карточка. Попробуй добавить родительскую или дочернюю карточку.", 
-                        parentIds:[], 
-                        mentions:[], 
-                        children:[], 
-                        createdAt:new Date().toLocaleString(), 
-                        bumpedAt:new Date().toISOString(), 
-                        isEmpty:false 
-                    }); 
-                    CardsModel.cards.push({ 
-                        id:id2, 
-                        title:"Пример связи", 
-                        placeholder:"Карточка", 
-                        content:"Эта карточка связана с Планетаходом.", 
-                        parentIds:[id1], 
-                        mentions:[], 
-                        children:[], 
-                        createdAt:new Date(Date.now()-86400000).toLocaleString(), 
-                        bumpedAt:new Date(Date.now()-86400000).toISOString(), 
-                        isEmpty:false 
-                    }); 
-                    CardsModel.saveState(); 
-                    CardsModel.updateAllRelations(); 
-                } 
+                statusDiv.style.background = "rgba(0, 0, 0, 0.5)";
+                statusDiv.style.color = "#ccddf8";
             }
-        };
-        
-        // ==================== ПРЕДСТАВЛЕНИЕ КАРТОЧЕК ====================
-        const CardsView = { 
-            render: () => { 
-                $('#cards-container').empty(); 
-                CardsModel.cards.forEach(card=>{ 
-                    const parents=(card.parentIds||[]).map(id=>{ const p=CardsModel.getCard(id); return p?{ id:p.id, title:p.title }:null; }).filter(Boolean); 
-                    const html=ejs.render($('#card-template').text(),{ ...card, parents, children:card.children||[], mentions:card.mentions||[] }); 
-                    $('#cards-container').append(html); 
-                }); 
-                CardsView.bindEvents(); 
-            }, 
-            
-            bindEvents: () => { 
-                $(document)
-                    .off('click', '#add-card-btn').on('click', '#add-card-btn', ()=>{ 
-                        const newCard=CardsModel.addCard(); 
-                        CardsView.render(); 
-                        setTimeout(()=>CardsView.highlightCard(newCard.id),100);
-                        // Обновляем все поисковые поля для новых карточек
-                        $('.parent-search-input, .child-search-input').off('input').on('input', function(){ 
-                            CardsView.handleSearchInput($(this)); 
-                        });
-                    })
-                    .off('click', '#delete-all-btn').on('click', '#delete-all-btn', ()=>{ if(CardsModel.cards.length && confirm("Уничтожить все карточки?")){ CardsModel.deleteAllCards(); CardsView.render(); } })
-                    .off('click', '.card__header .button--danger').on('click', '.card__header .button--danger', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const card=CardsModel.getCard(cardId); if(confirm(`Уничтожить карточку "${card?.title||'без названия'}"?`)){ CardsModel.deleteCard(cardId); $(this).closest('.card').remove(); } })
-                    .off('input', '.card__title').on('input', '.card__title', function(){ const cardId=$(this).closest('.card').data('card-id'); CardsModel.updateCard(cardId,{ title:$(this).val() }); })
-                    .off('click', '.remove-parent').on('click', '.remove-parent', function(e){ e.preventDefault(); const cardId=$(this).closest('.card').data('card-id'); const parentId=$(this).data('parent-id'); if(CardsModel.removeParent(cardId,parentId)){ CardsView.updateCardRelations(cardId); CardsView.updateCardRelations(parentId); } })
-                    .off('click', '.remove-child').on('click', '.remove-child', function(e){ e.preventDefault(); const parentId=$(this).closest('.card').data('card-id'); const childId=$(this).data('child-id'); if(CardsModel.removeChild(parentId,childId)){ CardsView.updateCardRelations(parentId); CardsView.updateCardRelations(childId); } })
-                    .off('click', '.remove-with-card').on('click', '.remove-with-card', function(e){ e.preventDefault(); const cardIdToRemove=$(this).data('card-id'); const currentCardId=$(this).closest('.card').data('card-id'); const cardToRemove=CardsModel.getCard(cardIdToRemove); if(cardToRemove && confirm(`Уничтожить карточку "${cardToRemove.title||'без названия'}"?`)){ CardsModel.deleteCard(cardIdToRemove); $(`[data-card-id="${cardIdToRemove}"]`).remove(); CardsView.updateCardRelations(currentCardId); } })
-                    .off('click', '.bump-text-button').on('click', '.bump-text-button', function(e){ e.preventDefault(); const cardId=$(this).data('card-id'); const card=CardsModel.getCard(cardId); if(card){ let oldestDate=new Date(); CardsModel.cards.forEach(c=>{ if(new Date(c.bumpedAt)<oldestDate) oldestDate=new Date(c.bumpedAt); }); card.bumpedAt=new Date(oldestDate.getTime()-1).toISOString(); CardsModel.saveState(); CardsModel.cards.sort((a,b)=>new Date(a.bumpedAt)-new Date(b.bumpedAt)); CardsView.render(); setTimeout(()=>CardsView.highlightCard(cardId),50); } })
-                    .off('click', '.mention, .child-link').on('click', '.mention, .child-link', function(e){ e.preventDefault(); const cardId=$(this).data('card-id'); CardsView.highlightCard(cardId); })
-                    .off('click', '.toggle-parent-search').on('click', '.toggle-parent-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__parents').find('.parent-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.parent-search-input').focus(); })
-                    .off('click', '.toggle-child-search').on('click', '.toggle-child-search', function(e){ e.preventDefault(); e.stopPropagation(); const $searchContainer=$(this).closest('.card__children').find('.child-search-container'); $searchContainer.toggleClass('visible'); if($searchContainer.hasClass('visible')) $searchContainer.find('.child-search-input').focus(); })
-                    .off('click', '.toggle-description').on('click', '.toggle-description', function(e){ e.preventDefault(); e.stopPropagation(); const $textarea=$(this).closest('.card').find('.card__textarea'); $textarea.toggleClass('visible'); $(this).text($textarea.hasClass('visible') ? 'скрыть' : 'показать'); })
-                    .off('input', '.parent-search-input').on('input', '.parent-search-input', function(){ CardsView.handleSearchInput($(this)); })
-                    .off('click', '.parent-suggestion-item').on('click', '.parent-suggestion-item', function(){ 
-                        const parentId=$(this).data('card-id'); 
-                        const cardId=$(this).closest('.card').data('card-id'); 
-                        const $input=$(this).closest('.card__parents').find('.parent-search-input'); 
-                        if(CardsModel.addParent(cardId,parentId)){ 
-                            $(this).closest('.suggestions').hide(); 
-                            $input.val('').focus(); 
-                            CardsView.updateCardRelations(cardId); 
-                            CardsView.updateCardRelations(parentId); 
-                        } 
-                    })
-                    .off('click', '.parent-search-add').on('click', '.parent-search-add', function(e){ 
-                        e.preventDefault(); 
-                        e.stopPropagation(); 
-                        const $input=$(this).siblings('.parent-search-input'); 
-                        const query=$input.val().trim(); 
-                        const cardId=$input.closest('.card').data('card-id'); 
-                        const $suggestions=$input.closest('.card__parents').find('.parent-suggestions'); 
-                        if(!query) return; 
-                        if($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length>0){ 
-                            const firstSuggestion=$suggestions.find('.suggestion-item').first(); 
-                            const parentId=firstSuggestion.data('card-id'); 
-                            if(CardsModel.addParent(cardId,parentId)){ 
-                                $suggestions.hide(); 
-                                $input.val(''); 
-                                CardsView.updateCardRelations(cardId); 
-                                CardsView.updateCardRelations(parentId); 
-                                $input.focus(); 
-                            } 
-                        } else { 
-                            const newCard=CardsModel.addCard(query); 
-                            if(CardsModel.addParent(cardId,newCard.id)){ 
-                                $input.val(''); 
-                                CardsView.render(); 
-                                CardsView.updateCardRelations(cardId); 
-                                setTimeout(()=>CardsView.highlightCard(newCard.id),100); 
-                                $input.focus(); 
-                            } 
-                        } 
-                    })
-                    .off('input', '.child-search-input').on('input', '.child-search-input', function(){ CardsView.handleSearchInput($(this)); })
-                    .off('click', '.child-suggestion-item').on('click', '.child-suggestion-item', function(){ 
-                        const childId=$(this).data('card-id'); 
-                        const parentId=$(this).closest('.card').data('card-id'); 
-                        const $input=$(this).closest('.card__children').find('.child-search-input'); 
-                        if(CardsModel.addChild(parentId,childId)){ 
-                            $(this).closest('.suggestions').hide(); 
-                            $input.val('').focus(); 
-                            CardsView.updateCardRelations(parentId); 
-                            CardsView.updateCardRelations(childId); 
-                        } 
-                    })
-                    .off('click', '.child-search-add').on('click', '.child-search-add', function(e){ 
-                        e.preventDefault(); 
-                        e.stopPropagation(); 
-                        const $input=$(this).siblings('.child-search-input'); 
-                        const query=$input.val().trim(); 
-                        const parentId=$input.closest('.card').data('card-id'); 
-                        const $suggestions=$input.closest('.card__children').find('.child-suggestions'); 
-                        if(!query) return; 
-                        if($suggestions.is(':visible') && $suggestions.find('.suggestion-item').length>0){ 
-                            const firstSuggestion=$suggestions.find('.suggestion-item').first(); 
-                            const childId=firstSuggestion.data('card-id'); 
-                            if(CardsModel.addChild(parentId,childId)){ 
-                                $suggestions.hide(); 
-                                $input.val(''); 
-                                CardsView.updateCardRelations(parentId); 
-                                CardsView.updateCardRelations(childId); 
-                                $input.focus(); 
-                            } 
-                        } else { 
-                            const newCard=CardsModel.addCard(query); 
-                            if(CardsModel.addChild(parentId,newCard.id)){ 
-                                $input.val(''); 
-                                CardsView.render(); 
-                                CardsView.updateCardRelations(parentId); 
-                                setTimeout(()=>CardsView.highlightCard(newCard.id),100); 
-                                $input.focus(); 
-                            } 
-                        } 
-                    });
-            },
-            
-            handleSearchInput: function($input) {
-                const query=$input.val().trim(); 
-                const cardId=$input.closest('.card').data('card-id'); 
-                const isParent=$input.hasClass('parent-search-input');
-                const $suggestions=$input.closest(isParent ? '.card__parents' : '.card__children').find(isParent ? '.parent-suggestions' : '.child-suggestions');
+        }
+
+        // Функция включения torch (фонарика) с уже существующим треком
+        async function enableTorch() {
+            if (!videoTrack) return false;
+            try {
+                // Применяем constraints с torch: true
+                await videoTrack.applyConstraints({
+                    advanced: [{ torch: true }]
+                });
+                isFlashOn = true;
+                updateUI();
+                return true;
+            } catch (err) {
+                console.error("Ошибка включения torch:", err);
+                statusDiv.innerHTML = "❌ Не удалось включить фонарик: " + (err.message || "неизвестная ошибка");
+                return false;
+            }
+        }
+
+        // Функция выключения torch
+        async function disableTorch() {
+            if (!videoTrack) return false;
+            try {
+                await videoTrack.applyConstraints({
+                    advanced: [{ torch: false }]
+                });
+                isFlashOn = false;
+                updateUI();
+                return true;
+            } catch (err) {
+                console.error("Ошибка выключения torch:", err);
+                // всё равно считаем что выключили, но для UI
+                isFlashOn = false;
+                updateUI();
+                return false;
+            }
+        }
+
+        // Полная остановка и освобождение камеры
+        async function stopCameraAndRelease() {
+            if (videoTrack) {
+                try {
+                    await disableTorch(); // пробуем выключить torch перед остановкой
+                } catch(e) { /* игнорим */ }
+                videoTrack.stop();
+                videoTrack = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => {
+                    if (track.readyState === 'live') track.stop();
+                });
+                mediaStream = null;
+            }
+            isFlashOn = false;
+            torchSupported = false;
+            updateUI();
+        }
+
+        // Инициализация доступа к камере и проверка torch
+        async function initTorch() {
+            // Если уже есть активный трек - сначала всё освободим (чистый старт)
+            if (videoTrack || mediaStream) {
+                await stopCameraAndRelease();
+            }
+
+            statusDiv.innerHTML = "📷 Запрашиваем доступ к камере...";
+            statusDiv.style.background = "rgba(70, 130, 200, 0.3)";
+
+            try {
+                // Запрашиваем видеопоток с задней камеры (environment)
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "environment" } }
+                });
                 
-                if(query.length>0){ 
-                    const results=CardsModel.searchCards(query,cardId,true); 
-                    $suggestions.empty(); 
-                    if(results.length>0){ 
-                        results.forEach(card=>{ 
-                            $suggestions.append(`<div class="suggestion-item ${isParent ? 'parent-suggestion-item' : 'child-suggestion-item'}" data-card-id="${card.id}">${CardsView.escapeHtml(card.title) || 'Без названия'}</div>`); 
-                        }); 
-                        $suggestions.show(); 
-                    } else $suggestions.hide(); 
-                } else $suggestions.hide(); 
-            },
-            
-            escapeHtml: function(str) { 
-                if(!str) return ''; 
-                return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); 
-            },
-            
-            highlightCard: (cardId)=>{ 
-                const $card=$(`.card[data-card-id="${cardId}"]`); 
-                if($card.length){ 
-                    $card.addClass('highlight'); 
-                    $card.get(0).scrollIntoView({ behavior: 'auto', block: 'center' }); 
-                    setTimeout(()=>$card.removeClass('highlight'),1500); 
-                } 
-            }, 
-            
-            updateCardRelations: (cardId)=>{ 
-                const card=CardsModel.getCard(cardId); 
-                if(!card) return; 
-                const $card=$(`.card[data-card-id="${cardId}"]`); 
-                if(!$card.length) return; 
-                const parents=(card.parentIds||[]).map(id=>{ const p=CardsModel.getCard(id); return p?{ id:p.id, title:p.title }:null; }).filter(Boolean); 
-                $card.find('.parents-list').html(parents.map(p=>`<div class="card__parent-item"><span class="mention" data-card-id="${p.id}">${CardsView.escapeHtml(p.title)}</span><button class="action-button remove-parent" data-parent-id="${p.id}">✕</button><button class="action-button remove-with-card" data-card-id="${p.id}">🗑</button></div>`).join('')); 
-                $card.find('.children-list').html((card.children||[]).map(c=>`<div class="card__child-item"><span class="child-link" data-card-id="${c.id}">${CardsView.escapeHtml(c.title)}</span><button class="action-button remove-child" data-child-id="${c.id}">✕</button><button class="action-button remove-with-card" data-card-id="${c.id}">🗑</button></div>`).join('')); 
-            } 
-        };
-        
-        // ==================== ИМЯ ПОЛЬЗОВАТЕЛЯ ====================
-        const UserName = { 
-            key:'userName', 
-            get:()=>localStorage.getItem(UserName.key)||'', 
-            save:(name)=>{ if(name&&name.trim()){ localStorage.setItem(UserName.key,name.trim()); return true; } return false; }, 
-            has:()=>{ const n=localStorage.getItem(UserName.key); return n&&n.trim().length>0; }, 
-            scrollDirection: 'up',
-            init:()=>{ 
-                if(UserName.has()){ $('#userNameDisplay').text(UserName.get()); $('#fixedNameButton').show(); } 
-                else { $('#nameModal').show(); $('#userNameInput').focus(); } 
-                $('#saveUserNameBtn').on('click',function(){ const name=$('#userNameInput').val().trim(); if(name){ UserName.save(name); $('#nameModal').hide(); $('#userNameDisplay').text(name); $('#fixedNameButton').show(); } else alert('Введите имя'); }); 
-                $('#userNameInput').on('keypress',function(e){ if(e.which===13)$('#saveUserNameBtn').click(); }); 
-                $('#fixedNameButton').on('click', function(){ 
-                    const isAtBottom = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 50;
-                    if (isAtBottom || UserName.scrollDirection === 'down') {
-                        window.scrollTo({ top: 0, behavior: 'auto' });
-                        UserName.scrollDirection = 'up';
-                    } else {
-                        window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
-                        UserName.scrollDirection = 'down';
+                mediaStream = stream;
+                const tracks = stream.getVideoTracks();
+                if (!tracks.length) {
+                    throw new Error("Нет видеодорожек");
+                }
+                
+                videoTrack = tracks[0];
+                
+                // Проверяем поддержку torch: у трека должны быть доступны capabilities
+                let capabilities = null;
+                try {
+                    capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
+                } catch(e) { capabilities = null; }
+                
+                let hasTorch = false;
+                if (capabilities && capabilities.torch) {
+                    hasTorch = true;
+                } else {
+                    // Дополнительная проверка: некоторые браузеры не отдают torch в capabilities,
+                    // но поддерживают через applyConstraints. Попробуем включить-выключить тест
+                    // Но делать тест "включить-выключить" сразу может вызвать лишнюю вспышку,
+                    // поэтому более щадящий способ: проверить через поддержку advanced constraints
+                    // Но попробуем запросить torch false без ошибок.
+                    try {
+                        // если applyConstraints с torch не вызовет ошибку, значит поддерживается
+                        await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                        hasTorch = true;
+                    } catch (testErr) {
+                        hasTorch = false;
                     }
-                }); 
-            } 
-        };
+                }
+                
+                if (!hasTorch) {
+                    // Torch не поддерживается, но мы оставим возможность? нет, без torch бесполезно
+                    throw new Error("Ваш браузер или устройство не поддерживают управление фонариком (torch). Нужен Chrome на Android, WebView с поддержкой.");
+                }
+                
+                torchSupported = true;
+                // Убеждаемся что фонарик выключен изначально
+                await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                isFlashOn = false;
+                updateUI();
+                statusDiv.innerHTML = "✅ Фонарик готов! Нажмите на кнопку, чтобы включить вспышку.";
+                statusDiv.style.background = "rgba(70, 200, 100, 0.2)";
+                return true;
+                
+            } catch (err) {
+                console.error("Ошибка инициализации torch / доступ к камере:", err);
+                let errorMsg = "";
+                if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                    errorMsg = "Нет разрешения на использование камеры. Разрешите доступ и перезагрузите страницу.";
+                } else if (err.name === "NotFoundError" || err.message.includes("environment")) {
+                    errorMsg = "Не найдена задняя камера. Попробуйте на телефоне с основной камерой.";
+                } else if (err.message && err.message.includes("torch")) {
+                    errorMsg = "Браузер не поддерживает управление вспышкой. Используйте Chrome для Android.";
+                } else {
+                    errorMsg = "Ошибка: " + (err.message || "Неизвестная ошибка");
+                }
+                statusDiv.innerHTML = "⚠️ " + errorMsg;
+                statusDiv.style.background = "rgba(200, 70, 60, 0.25)";
+                torchSupported = false;
+                isFlashOn = false;
+                updateUI();
+                // освобождаем всё что успели захватить
+                if (videoTrack) {
+                    videoTrack.stop();
+                    videoTrack = null;
+                }
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(t => t.stop());
+                    mediaStream = null;
+                }
+                return false;
+            }
+        }
+
+        // Обработчик клика на главную кнопку
+        async function onMainButtonPress() {
+            // Если torch не инициализирован или был сброшен, пробуем инициализировать
+            if (!torchSupported || !videoTrack) {
+                // Пытаемся получить доступ к камере и подготовить torch
+                const success = await initTorch();
+                if (!success) {
+                    // Не удалось инициализировать, показываем ошибку (уже в статусе)
+                    return;
+                }
+                // После успешной инициализации, если фонарик выключен, ничего не делаем? 
+                // Ждём повторного клика пользователя, потому что сейчас isFlashOn = false и torch выключен.
+                // Но можно сразу включить по желанию, но лучше чтобы пользователь ещё раз нажал для включения.
+                // Однако UX: кликнул на кнопку "ВКЛ" -> инициализировали камеру -> фонарик всё ещё выкл.
+                // Чтобы не заставлять нажимать дважды, сделаем авто-включение после успешной инициализации?
+                // Правильнее: после инициализации если кнопка была нажата и мы хотим включить, то включим.
+                if (!isFlashOn && torchSupported && videoTrack) {
+                    await enableTorch();
+                }
+                return;
+            }
+            
+            // Если уже инициализирован: переключаем состояние
+            if (isFlashOn) {
+                await disableTorch();
+            } else {
+                await enableTorch();
+            }
+        }
         
-        // ==================== ГЛАВНЫЙ КОНТРОЛЛЕР ====================
-        const AppController = { 
-            currentView: 'cards', 
-            init: function() { 
-                UserName.init(); 
-                JournalModel.load(); 
-                CardsModel.loadState(); 
-                JournalView.render(); 
-                CardsView.render(); 
-                this.loadViewPreference(); 
-                this.bindEvents(); 
-            }, 
-            bindEvents: function() { 
-                $('#modeSwitchHeader').on('click',()=>{ this.switchView(this.currentView==='cards'?'journal':'cards'); }); 
-                $('#floatingBtn').on('click',()=>{ JournalController.openAddModal(); }); 
-                $('#globalSearchInput').on('input',(e)=>this.handleGlobalSearch(e.target.value)); 
-                $(document).on('click',(e)=>{ if(!$(e.target).closest('.global-search').length)$('#globalSuggestions').hide(); }); 
-            }, 
-            switchView: function(view) { 
-                this.currentView=view; 
-                localStorage.setItem('appViewPreference',view); 
-                $('#modeTitle').text(view==='cards'?'Планетаход':'Дневник'); 
-                $('.view-container').removeClass('active'); 
-                $(`#${view}View`).addClass('active'); 
-                if(view==='journal'){ $('#floatingBtn').show(); $('#fixedNameButton').hide(); } 
-                else { $('#floatingBtn').hide(); $('#fixedNameButton').show(); } 
-            }, 
-            loadViewPreference: function() { 
-                const saved=localStorage.getItem('appViewPreference'); 
-                if(saved && (saved==='cards'||saved==='journal')) this.switchView(saved); 
-                else this.switchView('cards'); 
-            }, 
-            handleGlobalSearch: function(query) { 
-                const $suggestions=$('#globalSuggestions'); 
-                if(!query.trim()){ $suggestions.hide(); return; } 
-                const journalResults=JournalModel.searchEntries(query); 
-                const cardResults=CardsModel.searchCards(query,null,false); 
-                const results=[...journalResults,...cardResults]; 
-                if(results.length===0){ $suggestions.html('<div class="global-suggestion-item">Ничего не найдено</div>').show(); return; } 
-                $suggestions.empty(); 
-                results.slice(0,10).forEach(item=>{ 
-                    const typeLabel=item.type==='journal'?'Запись':'Карточка'; 
-                    $suggestions.append(`<div class="global-suggestion-item" data-id="${item.id}" data-type="${item.type}"><div><span class="suggestion-type">${typeLabel}</span><strong>${this.escapeHtml(item.title)}</strong></div><div style="font-size:11px;color:#888;margin-top:4px;">${item.date || ''}</div></div>`); 
-                }); 
-                $suggestions.show(); 
-                $('.global-suggestion-item').off('click').on('click',function(){ 
-                    const id=$(this).data('id'); 
-                    const type=$(this).data('type'); 
-                    $('#globalSearchInput').val(''); 
-                    $('#globalSuggestions').hide(); 
-                    if(type==='journal'){ AppController.switchView('journal'); setTimeout(()=>JournalView.highlightEntryById(id),100); } 
-                    else { AppController.switchView('cards'); setTimeout(()=>CardsView.highlightCard(id),100); } 
-                }); 
-            }, 
-            escapeHtml: function(str) { if(!str) return ''; return str.replace(/[&<>]/g,m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); } 
-        };
+        // Доп. защита: если страница выгружается или пользователь закрывает вкладку — останавливаем камеру
+        window.addEventListener('beforeunload', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => {
+                    if (track.stop) track.stop();
+                });
+            }
+        });
         
-        $(document).ready(()=>{ AppController.init(); });
-    </script>
+        // Привязываем обработчик клика по кнопке
+        flashBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            onMainButtonPress();
+        });
+        
+        // Также полезно проинформировать при загрузке страницы о необходимости жеста пользователя
+        // Не будем автоматически запрашивать доступ до клика — браузеры блокируют autoplay политики, но getUserMedia
+        // может быть вызван по клику, и это правильно. Поэтому первый клик вызовет инициализацию + включение.
+        // Это удобно: пользователь нажимает "ВКЛ", запрашивается доступ, и если всё ок — загорается фонарик.
+        // Но в текущей логике onMainButtonPress вызывает initTorch, затем если инициализация успешна, то enableTorch.
+        // enableTorch сработает после initTorch? Да, потому что после await initTorch внутри onMainButtonPress мы проверяем
+        // условие: если (!isFlashOn && torchSupported && videoTrack) -> включаем.
+        // Значит при первом нажатии произойдёт: запрос камеры -> torch выкл -> затем включение.
+        
+        // Выставим начальное состояние UI
+        updateUI();
+        statusDiv.innerHTML = "🔘 Нажмите на кнопку, чтобы включить фонарик (потребуется разрешение камеры)";
+        torchSupported = false; // пока не инициализирован
+        isFlashOn = false;
+        
+        // Примечание: Если открыть на десктопе Chrome (без камеры) — покажет ошибку, это нормально.
+        // Для iOS (Safari) torch не поддерживается, выведет сообщение после попытки.
+        // Дополнительно: на Android Chrome работает отлично.
+    })();
+</script>
 </body>
 </html>
