@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>Фонарик на сайте | Вспышка телефона</title>
+    <title>Вспышка: моргни один раз</title>
     <style>
         * {
             margin: 0;
@@ -15,7 +15,7 @@
 
         body {
             min-height: 100vh;
-            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            background: radial-gradient(circle at 20% 30%, #0b1120, #03060f);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -24,244 +24,194 @@
         }
 
         .card {
-            background: rgba(18, 25, 45, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 64px;
-            padding: 32px 24px 40px;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(12, 20, 30, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 72px;
+            padding: 32px 20px 44px;
+            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             width: 100%;
             max-width: 380px;
             text-align: center;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
         h1 {
-            font-size: 1.9rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            background: linear-gradient(135deg, #FFFFFF, #B0C4FF);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFF5E0, #FFD966);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .sub {
-            color: #8e9bb5;
-            font-size: 0.9rem;
+            color: #9aa9c7;
+            font-size: 0.85rem;
             margin-bottom: 32px;
-            border-bottom: 1px dashed #2a334e;
-            display: inline-block;
-            padding-bottom: 6px;
+            font-weight: 500;
         }
 
-        .flash-btn {
-            background: #1e2a3e;
+        /* Гигантская кнопка для моргания */
+        .blink-btn {
+            background: #1f2a3e;
             border: none;
-            width: 180px;
-            height: 180px;
-            border-radius: 180px;
-            margin: 16px auto 24px;
+            width: 200px;
+            height: 200px;
+            border-radius: 200px;
+            margin: 16px auto 28px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.05);
-            transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.4, 1.1), background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.05);
+            transition: transform 0.08s linear, box-shadow 0.15s;
             touch-action: manipulation;
         }
 
-        .flash-btn:active {
-            transform: scale(0.96);
+        .blink-btn:active {
+            transform: scale(0.94);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
         }
 
-        /* Иконка лампочки/вспышки */
         .icon {
-            font-size: 68px;
+            font-size: 78px;
             margin-bottom: 12px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            transition: transform 0.2s;
+            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
         }
 
         .btn-text {
-            font-size: 1.6rem;
-            font-weight: 700;
+            font-size: 1.7rem;
+            font-weight: 800;
             letter-spacing: 1px;
-            color: #eef5ff;
-            text-shadow: 0 1px 2px black;
+            color: #ffecb3;
+            text-shadow: 0 1px 2px #00000040;
         }
 
-        /* Активное состояние (фонарик включен) */
-        .flash-btn.active {
-            background: radial-gradient(circle at 30% 20%, #ffdd77, #ffaa33);
-            box-shadow: 0 0 28px 6px rgba(255, 200, 50, 0.7), inset 0 1px 4px rgba(255,255,200,0.8);
+        /* Анимация пульсации при клике (только визуальный эффект) */
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+            100% { box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); }
+        }
+        .blink-btn.pulse-effect {
+            animation: pulseRing 0.3s ease-out;
         }
 
-        .flash-btn.active .icon {
-            transform: scale(1.02);
-            filter: drop-shadow(0 0 12px gold);
-        }
-
-        .flash-btn.active .btn-text {
-            color: #2c1e0a;
-            text-shadow: 0 0 2px #ffd58c;
-        }
-
-        .status {
-            margin-top: 24px;
-            font-size: 0.9rem;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 12px 18px;
+        .status-area {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.55);
+            padding: 12px 16px;
             border-radius: 60px;
-            backdrop-filter: blur(4px);
-            color: #ccddf8;
+            font-size: 0.85rem;
             font-weight: 500;
-            display: inline-block;
-            width: auto;
+            backdrop-filter: blur(4px);
+            color: #d6e3ff;
+            transition: all 0.2s;
         }
 
-        .warning {
-            background: rgba(220, 90, 60, 0.25);
-            margin-top: 28px;
-            font-size: 0.75rem;
-            padding: 10px 14px;
-            border-radius: 32px;
-            color: #ffb7a0;
-            border-left: 3px solid #ff884d;
+        .info-note {
+            margin-top: 26px;
+            background: rgba(30, 40, 60, 0.7);
+            border-radius: 28px;
+            padding: 12px 14px;
+            font-size: 0.7rem;
             text-align: left;
+            color: #b7c3e0;
+            border-left: 3px solid #ffb347;
+        }
+
+        .info-note strong {
+            color: #ffd966;
         }
 
         .footer {
-            margin-top: 20px;
-            font-size: 0.7rem;
-            color: #5f6c8a;
-        }
-
-        button {
-            background: none;
-            border: none;
+            margin-top: 18px;
+            font-size: 0.65rem;
+            color: #6a789b;
         }
 
         @media (max-width: 480px) {
-            .flash-btn {
-                width: 150px;
-                height: 150px;
+            .blink-btn {
+                width: 170px;
+                height: 170px;
             }
             .icon {
-                font-size: 54px;
+                font-size: 64px;
             }
             .btn-text {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-
 <div class="card">
-    <h1>🔦 Вспышка</h1>
-    <div class="sub">управление фонариком</div>
+    <h1>⚡ МОРГНИ</h1>
+    <div class="sub">вспышка телефона → один раз</div>
 
-    <button id="flashButton" class="flash-btn" aria-label="Включить вспышку">
-        <div class="icon">💡</div>
-        <span class="btn-text" id="buttonLabel">ВКЛ</span>
+    <button id="blinkOnceBtn" class="blink-btn" aria-label="Моргнуть вспышкой">
+        <div class="icon">📸</div>
+        <span class="btn-text">ВСПЫШКА</span>
     </button>
 
-    <div class="status" id="statusMessage">
-        ⚡ Нажмите, чтобы включить фонарик
+    <div class="status-area" id="statusMsg">
+        🔘 Нажми на кнопку — вспышка моргнёт
     </div>
 
-    <div class="warning">
-        📱 <strong>Важно для работы:</strong><br>
-        • Сайт должен быть открыт через <strong>HTTPS</strong> (или localhost)<br>
-        • Разрешите доступ к камере при запросе<br>
-        • Работает в Chrome на Android, некоторые браузеры iOS не поддерживают torch
+    <div class="info-note">
+        <strong>✨ Как это работает</strong><br>
+        • При нажатии фонарик <strong>включается на долю секунды</strong> и сразу гаснет.<br>
+        • Требуется разрешение на камеру (один раз).<br>
+        • Работает на <strong>Android (Chrome, Edge)</strong> с поддержкой Torch API.<br>
+        • На iOS (Safari) физическая вспышка недоступна, но будет имитация.<br>
+        • Сайт должен быть открыт через <strong>HTTPS</strong> (или localhost).
     </div>
     <div class="footer">
-        Torch API • MediaStream
+        одно короткое моргание • torch blink
     </div>
 </div>
 
 <script>
     (function() {
-        // DOM элементы
-        const flashBtn = document.getElementById('flashButton');
-        const btnLabelSpan = document.getElementById('buttonLabel');
-        const statusDiv = document.getElementById('statusMessage');
+        // ----- DOM elements -----
+        const blinkButton = document.getElementById('blinkOnceBtn');
+        const statusDiv = document.getElementById('statusMsg');
 
-        // Состояния
-        let isFlashOn = false;          // горит ли фонарик сейчас
-        let mediaStream = null;         // текущий видеопоток
-        let videoTrack = null;           // видеотрек для управления torch
-        let torchSupported = false;      // флаг, поддерживается ли torch в данном браузере
+        // ----- State -----
+        let videoTrack = null;          // активный видеотрек (задняя камера)
+        let mediaStream = null;         // медиапоток
+        let torchReady = false;         // можно ли использовать torch
+        let isBlinking = false;          // защита от повторных морганий во время вспышки
 
-        // Функция обновления интерфейса
-        function updateUI() {
-            if (isFlashOn) {
-                flashBtn.classList.add('active');
-                btnLabelSpan.innerText = 'ВЫКЛ';
-                statusDiv.innerHTML = '🔆 ФОНАРИК ВКЛЮЧЕН 🔆';
-                statusDiv.style.background = "rgba(255, 200, 50, 0.2)";
-                statusDiv.style.color = "#fff3cf";
+        // ----- Вспомогательные UI функции -----
+        function setStatus(message, isError = false, isSuccess = false) {
+            statusDiv.innerHTML = message;
+            if (isError) {
+                statusDiv.style.background = "rgba(200, 70, 60, 0.4)";
+                statusDiv.style.color = "#ffc9c9";
+                statusDiv.style.borderLeft = "3px solid #ff6b6b";
+            } else if (isSuccess) {
+                statusDiv.style.background = "rgba(80, 200, 120, 0.3)";
+                statusDiv.style.color = "#e2ffec";
+                statusDiv.style.borderLeft = "3px solid #7aff87";
             } else {
-                flashBtn.classList.remove('active');
-                btnLabelSpan.innerText = 'ВКЛ';
-                if (torchSupported) {
-                    statusDiv.innerHTML = '⚡ Фонарик выключен. Нажмите снова.';
-                } else {
-                    statusDiv.innerHTML = '⚠️ Torch не поддерживается в этом браузере/ОС (нужен Chrome на Android)';
-                }
-                statusDiv.style.background = "rgba(0, 0, 0, 0.5)";
-                statusDiv.style.color = "#ccddf8";
+                statusDiv.style.background = "rgba(0, 0, 0, 0.55)";
+                statusDiv.style.color = "#d6e3ff";
+                statusDiv.style.borderLeft = "none";
             }
         }
 
-        // Функция включения torch (фонарика) с уже существующим треком
-        async function enableTorch() {
-            if (!videoTrack) return false;
-            try {
-                // Применяем constraints с torch: true
-                await videoTrack.applyConstraints({
-                    advanced: [{ torch: true }]
-                });
-                isFlashOn = true;
-                updateUI();
-                return true;
-            } catch (err) {
-                console.error("Ошибка включения torch:", err);
-                statusDiv.innerHTML = "❌ Не удалось включить фонарик: " + (err.message || "неизвестная ошибка");
-                return false;
-            }
-        }
-
-        // Функция выключения torch
-        async function disableTorch() {
-            if (!videoTrack) return false;
-            try {
-                await videoTrack.applyConstraints({
-                    advanced: [{ torch: false }]
-                });
-                isFlashOn = false;
-                updateUI();
-                return true;
-            } catch (err) {
-                console.error("Ошибка выключения torch:", err);
-                // всё равно считаем что выключили, но для UI
-                isFlashOn = false;
-                updateUI();
-                return false;
-            }
-        }
-
-        // Полная остановка и освобождение камеры
-        async function stopCameraAndRelease() {
+        // сброс всех ресурсов камеры
+        async function releaseCamera() {
             if (videoTrack) {
                 try {
-                    await disableTorch(); // пробуем выключить torch перед остановкой
-                } catch(e) { /* игнорим */ }
-                videoTrack.stop();
+                    // пытаемся выключить torch перед остановкой (чистота)
+                    await videoTrack.applyConstraints({ advanced: [{ torch: false }] }).catch(()=>{});
+                    videoTrack.stop();
+                } catch(e) {}
                 videoTrack = null;
             }
             if (mediaStream) {
@@ -270,166 +220,194 @@
                 });
                 mediaStream = null;
             }
-            isFlashOn = false;
-            torchSupported = false;
-            updateUI();
+            torchReady = false;
         }
 
-        // Инициализация доступа к камере и проверка torch
-        async function initTorch() {
-            // Если уже есть активный трек - сначала всё освободим (чистый старт)
-            if (videoTrack || mediaStream) {
-                await stopCameraAndRelease();
+        // инициализация доступа к камере и подготовка torch (без включения)
+        async function initTorchOnce() {
+            // если уже есть трек и он живой — используем его, torchReady должен быть true
+            if (videoTrack && mediaStream && torchReady) {
+                // дополнительно проверим что трек активен
+                if (videoTrack.readyState === 'live') {
+                    return true;
+                } else {
+                    // трек умер — пересоздаём
+                    await releaseCamera();
+                }
             }
-
-            statusDiv.innerHTML = "📷 Запрашиваем доступ к камере...";
-            statusDiv.style.background = "rgba(70, 130, 200, 0.3)";
-
+            
+            // если уже есть что-то, но torchReady false — тоже пересоздадим
+            if (videoTrack || mediaStream) {
+                await releaseCamera();
+            }
+            
+            setStatus("📷 Запрос доступа к камере (для вспышки)...", false);
             try {
-                // Запрашиваем видеопоток с задней камеры (environment)
+                // Запрашиваем именно заднюю камеру (environment)
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: { exact: "environment" } }
                 });
-                
                 mediaStream = stream;
                 const tracks = stream.getVideoTracks();
-                if (!tracks.length) {
-                    throw new Error("Нет видеодорожек");
-                }
-                
+                if (!tracks.length) throw new Error("Нет видеодорожек");
                 videoTrack = tracks[0];
                 
-                // Проверяем поддержку torch: у трека должны быть доступны capabilities
-                let capabilities = null;
+                // Проверка поддержки torch
+                let torchSupported = false;
+                // Способ 1: capabilities
                 try {
-                    capabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
-                } catch(e) { capabilities = null; }
+                    const caps = videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
+                    if (caps && caps.torch === true) torchSupported = true;
+                } catch(e) {}
                 
-                let hasTorch = false;
-                if (capabilities && capabilities.torch) {
-                    hasTorch = true;
-                } else {
-                    // Дополнительная проверка: некоторые браузеры не отдают torch в capabilities,
-                    // но поддерживают через applyConstraints. Попробуем включить-выключить тест
-                    // Но делать тест "включить-выключить" сразу может вызвать лишнюю вспышку,
-                    // поэтому более щадящий способ: проверить через поддержку advanced constraints
-                    // Но попробуем запросить torch false без ошибок.
+                // Способ 2: пробуем применить constraints (torch: false) и словить ошибку
+                if (!torchSupported) {
                     try {
-                        // если applyConstraints с torch не вызовет ошибку, значит поддерживается
                         await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-                        hasTorch = true;
+                        torchSupported = true;
                     } catch (testErr) {
-                        hasTorch = false;
+                        torchSupported = false;
                     }
                 }
                 
-                if (!hasTorch) {
-                    // Torch не поддерживается, но мы оставим возможность? нет, без torch бесполезно
-                    throw new Error("Ваш браузер или устройство не поддерживают управление фонариком (torch). Нужен Chrome на Android, WebView с поддержкой.");
+                if (!torchSupported) {
+                    throw new Error("Ваш браузер/устройство не поддерживает управление вспышкой (Torch). Нужен Chrome на Android.");
                 }
                 
-                torchSupported = true;
-                // Убеждаемся что фонарик выключен изначально
+                // Убедимся что фонарик выключен после инициализации
                 await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-                isFlashOn = false;
-                updateUI();
-                statusDiv.innerHTML = "✅ Фонарик готов! Нажмите на кнопку, чтобы включить вспышку.";
-                statusDiv.style.background = "rgba(70, 200, 100, 0.2)";
+                torchReady = true;
+                setStatus("✅ Готово! Нажми на кнопку — вспышка моргнёт.", true, true);
                 return true;
                 
             } catch (err) {
-                console.error("Ошибка инициализации torch / доступ к камере:", err);
+                console.error("Ошибка инициализации:", err);
                 let errorMsg = "";
                 if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                    errorMsg = "Нет разрешения на использование камеры. Разрешите доступ и перезагрузите страницу.";
+                    errorMsg = "❌ Нет разрешения на камеру. Обновите страницу и разрешите доступ.";
                 } else if (err.name === "NotFoundError" || err.message.includes("environment")) {
-                    errorMsg = "Не найдена задняя камера. Попробуйте на телефоне с основной камерой.";
+                    errorMsg = "❌ Не найдена задняя камера. Используйте телефон с основной камерой.";
                 } else if (err.message && err.message.includes("torch")) {
-                    errorMsg = "Браузер не поддерживает управление вспышкой. Используйте Chrome для Android.";
+                    errorMsg = "⚠️ Ваш браузер не умеет управлять вспышкой. Попробуйте Chrome на Android.";
                 } else {
-                    errorMsg = "Ошибка: " + (err.message || "Неизвестная ошибка");
+                    errorMsg = "⚠️ Ошибка: " + (err.message || "неизвестная проблема");
                 }
-                statusDiv.innerHTML = "⚠️ " + errorMsg;
-                statusDiv.style.background = "rgba(200, 70, 60, 0.25)";
-                torchSupported = false;
-                isFlashOn = false;
-                updateUI();
-                // освобождаем всё что успели захватить
-                if (videoTrack) {
-                    videoTrack.stop();
-                    videoTrack = null;
-                }
-                if (mediaStream) {
-                    mediaStream.getTracks().forEach(t => t.stop());
-                    mediaStream = null;
-                }
+                setStatus(errorMsg, true);
+                await releaseCamera();
+                torchReady = false;
                 return false;
             }
         }
-
-        // Обработчик клика на главную кнопку
-        async function onMainButtonPress() {
-            // Если torch не инициализирован или был сброшен, пробуем инициализировать
-            if (!torchSupported || !videoTrack) {
-                // Пытаемся получить доступ к камере и подготовить torch
-                const success = await initTorch();
-                if (!success) {
-                    // Не удалось инициализировать, показываем ошибку (уже в статусе)
-                    return;
-                }
-                // После успешной инициализации, если фонарик выключен, ничего не делаем? 
-                // Ждём повторного клика пользователя, потому что сейчас isFlashOn = false и torch выключен.
-                // Но можно сразу включить по желанию, но лучше чтобы пользователь ещё раз нажал для включения.
-                // Однако UX: кликнул на кнопку "ВКЛ" -> инициализировали камеру -> фонарик всё ещё выкл.
-                // Чтобы не заставлять нажимать дважды, сделаем авто-включение после успешной инициализации?
-                // Правильнее: после инициализации если кнопка была нажата и мы хотим включить, то включим.
-                if (!isFlashOn && torchSupported && videoTrack) {
-                    await enableTorch();
-                }
+        
+        // ----- Самое главное: моргнуть один раз (включить и мгновенно выключить) -----
+        async function blinkFlash() {
+            // Защита от одновременных морганий
+            if (isBlinking) {
+                console.log("уже моргаем, пропускаем");
                 return;
             }
             
-            // Если уже инициализирован: переключаем состояние
-            if (isFlashOn) {
-                await disableTorch();
-            } else {
-                await enableTorch();
+            // Если torch не готов — пробуем инициализировать на месте
+            if (!torchReady || !videoTrack) {
+                setStatus("⚙️ Подключаю камеру перед вспышкой...", false);
+                const initSuccess = await initTorchOnce();
+                if (!initSuccess) {
+                    // ошибка уже выведена в статусе
+                    return;
+                }
+                // после успешной инициализации torchReady = true
+            }
+            
+            // Доп. проверка на живой трек
+            if (!videoTrack || videoTrack.readyState !== 'live') {
+                setStatus("🔄 Переподключаем камеру...", false);
+                await releaseCamera();
+                const retryInit = await initTorchOnce();
+                if (!retryInit) return;
+            }
+            
+            isBlinking = true;
+            
+            try {
+                // 1. Включаем torch
+                await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
+                
+                // 2. Малюсенькая задержка — вспышка успевает загореться (достаточно 50-100 мс)
+                //    но для надежности визуального моргания делаем 80 мс. На большинстве устройств этого хватает.
+                await new Promise(resolve => setTimeout(resolve, 80));
+                
+                // 3. Выключаем torch
+                await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                
+                // Визуальный фидбек на кнопке: пульсация
+                blinkButton.classList.add('pulse-effect');
+                setTimeout(() => blinkButton.classList.remove('pulse-effect'), 300);
+                
+                // Статус успеха (на пару секунд)
+                setStatus("✨ Вспышка моргнула! ✨", false, true);
+                setTimeout(() => {
+                    if (torchReady && !isBlinking) {
+                        setStatus("✅ Готово к следующему морганию", false, true);
+                    } else if (torchReady) {
+                        setStatus("🔆 Жми ещё раз — будет вспышка", false);
+                    }
+                }, 1500);
+                
+            } catch (err) {
+                console.error("Ошибка во время моргания:", err);
+                setStatus("❌ Не удалось моргнуть вспышкой. Возможно, камера занята.", true);
+                // Пытаемся сбросить состояние torch (может быть поломан)
+                if (videoTrack) {
+                    try {
+                        await videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                    } catch(e) {}
+                }
+                // В случае ошибки, вероятно, трек нужно пересоздать
+                torchReady = false;
+                await releaseCamera();
+            } finally {
+                isBlinking = false;
             }
         }
         
-        // Доп. защита: если страница выгружается или пользователь закрывает вкладку — останавливаем камеру
+        // ----- Обработчик нажатия кнопки -----
+        async function onBlinkPress() {
+            // добавляем тактильный отклик, если поддерживается (вибро)
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(20);
+            }
+            await blinkFlash();
+        }
+        
+        // ----- Cleanup при уходе со страницы -----
         window.addEventListener('beforeunload', () => {
             if (mediaStream) {
-                mediaStream.getTracks().forEach(track => {
-                    if (track.stop) track.stop();
-                });
+                mediaStream.getTracks().forEach(t => t.stop());
             }
         });
         
-        // Привязываем обработчик клика по кнопке
-        flashBtn.addEventListener('click', (e) => {
+        // Обработчик клика по кнопке
+        blinkButton.addEventListener('click', (e) => {
             e.preventDefault();
-            onMainButtonPress();
+            onBlinkPress();
         });
         
-        // Также полезно проинформировать при загрузке страницы о необходимости жеста пользователя
-        // Не будем автоматически запрашивать доступ до клика — браузеры блокируют autoplay политики, но getUserMedia
-        // может быть вызван по клику, и это правильно. Поэтому первый клик вызовет инициализацию + включение.
-        // Это удобно: пользователь нажимает "ВКЛ", запрашивается доступ, и если всё ок — загорается фонарик.
-        // Но в текущей логике onMainButtonPress вызывает initTorch, затем если инициализация успешна, то enableTorch.
-        // enableTorch сработает после initTorch? Да, потому что после await initTorch внутри onMainButtonPress мы проверяем
-        // условие: если (!isFlashOn && torchSupported && videoTrack) -> включаем.
-        // Значит при первом нажатии произойдёт: запрос камеры -> torch выкл -> затем включение.
+        // Первоначальный статус: ничего не инициализируем до первого нажатия (экономия ресурсов)
+        setStatus("🔘 Нажми на большую кнопку — вспышка моргнёт 1 раз", false);
+        torchReady = false;
+        videoTrack = null;
+        mediaStream = null;
+        isBlinking = false;
         
-        // Выставим начальное состояние UI
-        updateUI();
-        statusDiv.innerHTML = "🔘 Нажмите на кнопку, чтобы включить фонарик (потребуется разрешение камеры)";
-        torchSupported = false; // пока не инициализирован
-        isFlashOn = false;
-        
-        // Примечание: Если открыть на десктопе Chrome (без камеры) — покажет ошибку, это нормально.
-        // Для iOS (Safari) torch не поддерживается, выведет сообщение после попытки.
-        // Дополнительно: на Android Chrome работает отлично.
+        // Дополнительно: если на мобильном устройстве с Android Chrome — покажем подсказку, что всё ок
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isChrome = /Chrome/i.test(navigator.userAgent);
+        if (isAndroid && isChrome) {
+            // небольшая пометка в консоль, не трогаем UI
+            console.log("Android Chrome — поддержка torch ожидается");
+        } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            setStatus("⚠️ На iOS физическая вспышка недоступна, но вы можете проверить имитацию (камера даст доступ, но torch не сработает)", false);
+        }
     })();
 </script>
 </body>
