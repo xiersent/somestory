@@ -234,14 +234,16 @@
             margin: 16px 0;
         }
         
-        .init-error {
-            background: rgba(245, 101, 101, 0.2);
-            border: 1px solid #f56565;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 20px;
-            color: #fc8181;
-            text-align: center;
+        .direct-link {
+            color: #90cdf4;
+            word-break: break-all;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -273,12 +275,14 @@
             <div class="test-sound-title">🎵 Тестирование звука без вспышки</div>
             <div class="button-group">
                 <button id="testSoundOnlyBtn" class="btn-secondary">▶️ Только звук (файл)</button>
+                <button id="testSoundDirectBtn" class="btn-secondary test-button">🔊 Прямое воспроизведение Audio</button>
                 <button id="testBuiltinSoundBtn" class="btn-secondary">🎹 Только звук (встроенный)</button>
             </div>
             <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
             <div class="file-check" id="fileCheckDisplay">
                 🔍 Проверка файла...
             </div>
+            <div class="direct-link" id="directLink"></div>
         </div>
         
         <div class="button-group">
@@ -297,7 +301,7 @@
     <div class="flash-indicator" id="flashIndicator"></div>
     
     <script>
-        // ==================== FlashModule КЛАСС (встроенный) ====================
+        // ==================== FlashModule КЛАСС ====================
         class FlashModule {
             constructor(options = {}) {
                 this.options = {
@@ -331,44 +335,7 @@
                 this.play = this.play.bind(this);
                 this.blink = this.blink.bind(this);
                 this.playSound = this.playSound.bind(this);
-                this.setSound = this.setSound.bind(this);
                 this.releaseCamera = this.releaseCamera.bind(this);
-                
-                if (options.autoInit) {
-                    this.initCamera();
-                }
-            }
-            
-            async setSound(fileName) {
-                if (!fileName) {
-                    this.useBuiltin = true;
-                    this.options.soundFile = null;
-                    this._log("Переключено на встроенный звук");
-                    return true;
-                }
-                
-                this.options.soundFile = fileName;
-                const exists = await this._checkSoundFile(fileName);
-                
-                if (exists) {
-                    this.useBuiltin = false;
-                    this._log(`Звук установлен: ${fileName}`);
-                    return true;
-                } else {
-                    this._log(`Файл ${fileName} не найден, используем встроенный звук`);
-                    this.useBuiltin = true;
-                    return false;
-                }
-            }
-            
-            async _checkSoundFile(fileName) {
-                const url = this.getSoundUrl(fileName);
-                try {
-                    const response = await fetch(url, { method: 'HEAD' });
-                    return response.ok;
-                } catch(e) {
-                    return false;
-                }
             }
             
             getSoundUrl(fileName = null) {
@@ -474,10 +441,11 @@
             async playSound(fileName = null) {
                 const targetFile = fileName || this.options.soundFile;
                 
-                if (targetFile && !this.useBuiltin) {
+                // Всегда пробуем файл, если он указан
+                if (targetFile) {
                     const success = await this._playFileSound(targetFile);
-                    if (success) return;
-                    this.useBuiltin = true;
+                    if (success) return true;
+                    this._log(`Файл не воспроизвелся, пробуем встроенный звук`);
                 }
                 
                 return this._playBuiltinSound();
@@ -491,48 +459,59 @@
                         return;
                     }
                     
+                    this._log(`Попытка воспроизвести: ${soundUrl}`);
+                    
                     const audio = new Audio();
                     audio.src = soundUrl;
                     audio.volume = this.options.soundVolume;
+                    audio.preload = 'auto';
                     
                     let resolved = false;
                     
-                    const onEnded = () => {
-                        if (resolved) return;
-                        resolved = true;
-                        cleanup();
-                        if (this.options.onSoundEnd) this.options.onSoundEnd();
-                        resolve(true);
+                    const onCanPlay = () => {
+                        this._log(`Аудио загружено, воспроизводим...`);
+                        audio.play().then(() => {
+                            if (!resolved) {
+                                resolved = true;
+                                if (this.options.onSoundStart) this.options.onSoundStart(fileName);
+                                resolve(true);
+                            }
+                        }).catch(err => {
+                            this._log(`Ошибка play(): ${err.message}`);
+                            if (!resolved) {
+                                resolved = true;
+                                resolve(false);
+                            }
+                        });
                     };
                     
                     const onError = (e) => {
-                        if (resolved) return;
-                        resolved = true;
-                        cleanup();
-                        this._log(`Файл ${fileName} не воспроизвёлся: ${e?.message || 'неизвестная ошибка'}`);
-                        resolve(false);
+                        this._log(`Ошибка загрузки: ${audio.error ? audio.error.code : 'unknown'}`);
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(false);
+                        }
                     };
                     
-                    const cleanup = () => {
-                        audio.removeEventListener('ended', onEnded);
-                        audio.removeEventListener('error', onError);
+                    const onEnded = () => {
+                        if (this.options.onSoundEnd) this.options.onSoundEnd();
                     };
                     
-                    audio.addEventListener('ended', onEnded);
+                    audio.addEventListener('canplaythrough', onCanPlay);
                     audio.addEventListener('error', onError);
+                    audio.addEventListener('ended', onEnded);
                     
-                    audio.play().catch(onError);
+                    // Загружаем аудио
+                    audio.load();
                     
-                    if (this.options.onSoundStart) this.options.onSoundStart(fileName);
-                    
+                    // Таймаут на случай если файл очень большой
                     setTimeout(() => {
                         if (!resolved) {
                             resolved = true;
-                            cleanup();
-                            if (!audio.paused) audio.pause();
+                            this._log(`Таймаут загрузки аудио`);
                             resolve(false);
                         }
-                    }, 10000);
+                    }, 5000);
                 });
             }
             
@@ -630,20 +609,8 @@
                 this.isFlashing = false;
             }
             
-            setFlashDuration(ms) {
-                this.options.flashDuration = ms;
-            }
-            
-            getFlashDuration() {
-                return this.options.flashDuration;
-            }
-            
             setVolume(vol) {
                 this.options.soundVolume = Math.min(1, Math.max(0, vol));
-            }
-            
-            isTorchSupported() {
-                return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
             }
             
             _log(...args) {
@@ -665,6 +632,9 @@
         const volumeSlider = document.getElementById('volumeSlider');
         const logArea = document.getElementById('logArea');
         const flashIndicator = document.getElementById('flashIndicator');
+        const directLinkEl = document.getElementById('directLink');
+        
+        const SOUND_URL = '/sounds/scanner_photo1.wav';
         
         function addLog(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
@@ -689,37 +659,78 @@
             }, duration);
         }
         
-        async function checkSoundFile() {
-            const soundUrl = '/sounds/scanner_photo1.wav';
-            addLog(`🔍 Проверка файла: ${soundUrl}`, 'info');
+        // Прямая проверка через создание аудио элемента
+        async function checkSoundFileDirect() {
+            addLog(`🔍 Прямая проверка файла: ${SOUND_URL}`, 'info');
+            directLinkEl.innerHTML = `📁 Прямая ссылка: <a href="${SOUND_URL}" target="_blank">${SOUND_URL}</a> (кликните для скачивания)`;
             
+            // Пробуем через fetch с полным логированием
             try {
-                const response = await fetch(soundUrl, { method: 'HEAD' });
+                addLog(`🌐 Выполняем fetch запрос...`, 'info');
+                const response = await fetch(SOUND_URL);
+                addLog(`📡 Статус ответа: ${response.status} ${response.statusText}`, 'info');
+                
                 if (response.ok) {
-                    addLog(`✅ Файл найден!`, 'success');
-                    soundFileStatusEl.innerHTML = '<span class="badge success">✅ Файл найден</span><br><span style="font-size:11px">/sounds/scanner_photo1.wav</span>';
+                    const blob = await response.blob();
+                    addLog(`✅ Файл загружен! Размер: ${blob.size} байт, тип: ${blob.type || 'audio/wav'}`, 'success');
                     
-                    try {
-                        const testFetch = await fetch(soundUrl);
-                        const blob = await testFetch.blob();
-                        addLog(`📊 Тип файла: ${blob.type}, размер: ${blob.size} байт`, 'info');
-                        if (blob.size === 0) {
-                            addLog(`⚠️ Файл пустой (0 байт)!`, 'warning');
-                        }
-                    } catch(e) {
-                        addLog(`⚠️ Не удалось загрузить файл: ${e.message}`, 'warning');
+                    if (blob.size > 0) {
+                        soundFileStatusEl.innerHTML = '<span class="badge success">✅ Файл доступен</span><br><span style="font-size:11px">' + SOUND_URL + '<br>' + blob.size + ' байт</span>';
+                        return true;
+                    } else {
+                        addLog(`⚠️ Файл пустой (0 байт)`, 'warning');
+                        soundFileStatusEl.innerHTML = '<span class="badge warning">⚠️ Файл пустой</span>';
+                        return false;
                     }
-                    return true;
                 } else {
-                    addLog(`❌ Файл не найден! Статус: ${response.status}`, 'error');
-                    soundFileStatusEl.innerHTML = '<span class="badge error">❌ Файл НЕ найден</span><br><span style="font-size:11px">/sounds/scanner_photo1.wav</span>';
+                    addLog(`❌ Файл не доступен, статус: ${response.status}`, 'error');
+                    soundFileStatusEl.innerHTML = '<span class="badge error">❌ Файл не доступен</span>';
                     return false;
                 }
             } catch(e) {
-                addLog(`❌ Ошибка проверки: ${e.message}`, 'error');
-                soundFileStatusEl.innerHTML = '<span class="badge error">⚠️ Ошибка проверки</span>';
+                addLog(`❌ Ошибка fetch: ${e.message}`, 'error');
+                soundFileStatusEl.innerHTML = '<span class="badge error">⚠️ Ошибка доступа</span>';
                 return false;
             }
+        }
+        
+        // Прямое воспроизведение через Audio API
+        function directAudioPlay() {
+            addLog(`🔊 Прямое воспроизведение через Audio API`, 'info');
+            addLog(`📁 URL: ${SOUND_URL}`, 'info');
+            
+            const audio = new Audio();
+            audio.src = SOUND_URL;
+            audio.volume = volumeSlider.value;
+            audio.preload = 'auto';
+            
+            audio.oncanplaythrough = () => {
+                addLog(`✅ Аудио загружено, пробуем воспроизвести...`, 'success');
+                audio.play().then(() => {
+                    addLog(`✅ Звук воспроизводится!`, 'success');
+                    setTimeout(() => {
+                        audio.pause();
+                        addLog(`⏸️ Воспроизведение остановлено`, 'info');
+                    }, 3000);
+                }).catch(err => {
+                    addLog(`❌ Ошибка воспроизведения: ${err.message}`, 'error');
+                    addLog(`💡 Возможно, нужно взаимодействие с пользователем (tap/click)`, 'warning');
+                });
+            };
+            
+            audio.onerror = (e) => {
+                addLog(`❌ Ошибка загрузки аудио: ${audio.error ? audio.error.code : 'unknown'}`, 'error');
+                if (audio.error) {
+                    switch(audio.error.code) {
+                        case 1: addLog(`   Причина: MEDIA_ERR_ABORTED`, 'error'); break;
+                        case 2: addLog(`   Причина: MEDIA_ERR_NETWORK`, 'error'); break;
+                        case 3: addLog(`   Причина: MEDIA_ERR_DECODE`, 'error'); break;
+                        case 4: addLog(`   Причина: MEDIA_ERR_SRC_NOT_SUPPORTED`, 'error'); break;
+                    }
+                }
+            };
+            
+            audio.load();
         }
         
         function updateCameraStatus() {
@@ -742,38 +753,24 @@
         }
         
         async function testSoundOnly() {
-            addLog(`🎵 Тестирование звукового файла...`, 'info');
+            addLog(`🎵 Тестирование звука через FlashModule...`, 'info');
             
             if (!flashModule) {
                 addLog(`❌ Модуль не инициализирован`, 'error');
                 return;
             }
             
-            flashModule.useBuiltin = false;
-            flashModule.options.soundFile = 'scanner_photo1.wav';
             flashModule.options.debug = true;
+            flashModule.options.soundFile = 'scanner_photo1.wav';
             
-            addLog(`🔊 Воспроизведение: /sounds/scanner_photo1.wav`, 'info');
+            addLog(`🔊 URL: ${flashModule.getSoundUrl('scanner_photo1.wav')}`, 'info');
             
             const result = await flashModule.playSound('scanner_photo1.wav');
             
             if (result) {
                 addLog(`✅ Звук успешно воспроизведён!`, 'success');
             } else {
-                addLog(`❌ Звук НЕ воспроизвёлся!`, 'error');
-                addLog(`🔧 Возможные причины:`, 'error');
-                addLog(`   1. Файл повреждён или имеет неподдерживаемый формат`, 'error');
-                addLog(`   2. Путь к файлу неверный`, 'error');
-                addLog(`   3. Браузер блокирует автоматическое воспроизведение`, 'error');
-                
-                const audio = new Audio('/sounds/scanner_photo1.wav');
-                audio.volume = volumeSlider.value;
-                audio.play().then(() => {
-                    addLog(`✅ Альтернативный способ сработал!`, 'success');
-                    setTimeout(() => audio.pause(), 3000);
-                }).catch(err => {
-                    addLog(`❌ Альтернативный способ: ${err.message}`, 'error');
-                });
+                addLog(`❌ Звук НЕ воспроизвёлся`, 'error');
             }
         }
         
@@ -785,18 +782,13 @@
                 return;
             }
             
-            const oldUseBuiltin = flashModule.useBuiltin;
-            flashModule.useBuiltin = true;
-            
-            const result = await flashModule.playSound();
+            const result = await flashModule._playBuiltinSound();
             
             if (result) {
                 addLog(`✅ Встроенный звук воспроизведён`, 'success');
             } else {
                 addLog(`❌ Встроенный звук не воспроизвёлся`, 'error');
             }
-            
-            flashModule.useBuiltin = oldUseBuiltin;
         }
         
         async function testFullPlay(useBuiltin = false) {
@@ -808,10 +800,7 @@
             addLog(`🎬 Запуск: ${useBuiltin ? 'встроенный звук' : 'файл scanner_photo1.wav'} + вспышка`, 'info');
             
             if (!useBuiltin) {
-                flashModule.useBuiltin = false;
                 flashModule.options.soundFile = 'scanner_photo1.wav';
-            } else {
-                flashModule.useBuiltin = true;
             }
             
             flashModule.options.onFlashStart = (duration) => {
@@ -829,13 +818,6 @@
             } else {
                 addLog(`❌ Тест не удался`, 'error');
             }
-            
-            setTimeout(() => {
-                flashModule.options.onSoundStart = null;
-                flashModule.options.onSoundEnd = null;
-                flashModule.options.onFlashStart = null;
-                flashModule.options.onFlashEnd = null;
-            }, 1000);
         }
         
         async function testFlashOnly() {
@@ -866,10 +848,12 @@
         async function init() {
             addLog(`🚀 Инициализация FlashModule...`, 'info');
             
+            // Сначала проверяем файл
+            await checkSoundFileDirect();
+            
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 addLog(`❌ Браузер не поддерживает getUserMedia`, 'error');
                 addLog(`💡 Используйте Chrome на Android`, 'warning');
-                return;
             }
             
             flashModule = new FlashModule({
@@ -891,15 +875,6 @@
             
             addLog(`✅ Модуль создан`, 'success');
             updateCameraStatus();
-            
-            await checkSoundFile();
-            
-            setTimeout(() => {
-                if (!flashModule.torchReady) {
-                    addLog(`🔄 Фоновая инициализация камеры...`, 'info');
-                    flashModule.initCamera();
-                }
-            }, 1000);
         }
         
         function setupEventHandlers() {
@@ -907,6 +882,7 @@
             document.getElementById('playBuiltinBtn').onclick = () => testFullPlay(true);
             document.getElementById('flashOnlyBtn').onclick = () => testFlashOnly();
             document.getElementById('testSoundOnlyBtn').onclick = () => testSoundOnly();
+            document.getElementById('testSoundDirectBtn').onclick = () => directAudioPlay();
             document.getElementById('testBuiltinSoundBtn').onclick = () => testBuiltinSound();
             document.getElementById('releaseBtn').onclick = () => {
                 if (flashModule) {
@@ -935,7 +911,6 @@
         setupEventHandlers();
         
         addLog(`📱 User Agent: ${navigator.userAgent}`, 'info');
-        addLog(`🔊 AudioContext: ${window.AudioContext ? 'доступен' : 'недоступен'}`, 'info');
     </script>
 </body>
 </html>
