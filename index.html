@@ -2,884 +2,618 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тестирование FlashModule - диагностика звука</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>YouTube Key Hunter: поиск реальных видео по случайным ключам</title>
     <style>
         * {
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', monospace;
         }
-        
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
+            background: #0f0f0f;
             margin: 0;
             padding: 20px;
+            color: #f1f1f1;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #1e1e1e;
+            border-radius: 24px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            border: 1px solid #2c2c2c;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #ff4d4d, #f9cb28);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .sub {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #2c2c2c;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+            border: 1px solid #3c3c3c;
+        }
+        button.primary {
+            background: #cc0000;
+            border-color: #ff4d4d;
+            box-shadow: 0 2px 6px rgba(204,0,0,0.3);
+        }
+        button.primary:hover {
+            background: #ff0000;
+            transform: scale(0.97);
+        }
+        button:hover {
+            background: #3a3a3a;
+        }
+        .stats {
+            background: #1a1a1a;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: inline-flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .stats span {
+            color: #f9cb28;
+            font-weight: bold;
+        }
+        .progress-area {
+            margin: 16px 0 12px;
+            background: #1e1e1e;
+            border-radius: 32px;
+            padding: 12px 20px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border-left: 5px solid #cc0000;
+        }
+        .current-check {
+            color: #ffb74d;
+            word-break: break-all;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 18px;
+            margin-top: 24px;
+        }
+        .video-card {
+            background: #181818;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #282828;
+            transition: 0.1s linear;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-header {
+            padding: 12px 16px 8px 16px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .video-id {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.85rem;
+            background: #0f0f0f;
+            padding: 4px 10px;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+        }
+        .badge {
+            font-size: 0.7rem;
+            background: #2a2a2a;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .badge.found {
+            background: #1e5a2e;
+            color: #b0ffb0;
+        }
+        .badge.missing {
+            background: #5a1e1e;
+            color: #ffaaaa;
+        }
+        .thumbnail-preview {
+            background: #0a0a0a;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-        
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 32px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        h1 {
-            margin: 0 0 8px 0;
-            font-size: 28px;
-            text-align: center;
-            color: white;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #a0aec0;
-            margin-bottom: 24px;
-            font-size: 14px;
-        }
-        
-        .status-card {
-            background: rgba(0,0,0,0.5);
-            border-radius: 20px;
+            min-height: 100px;
             padding: 16px;
-            margin-bottom: 20px;
+            position: relative;
         }
-        
-        .status-row {
+        img {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px black;
+            transition: 0.1s;
+            background: #000;
+        }
+        .img-placeholder {
+            color: #6a6a6a;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 20px;
+        }
+        .info-row {
+            padding: 10px 16px 14px;
+            font-size: 0.75rem;
+            color: #bdbdbd;
+            border-top: 1px solid #232323;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        
-        .status-row:last-child {
-            border-bottom: none;
+        .resolution {
+            font-family: monospace;
         }
-        
-        .status-label {
-            color: #cbd5e0;
-            font-weight: 500;
-        }
-        
-        .status-value {
-            color: white;
-            font-family: 'Courier New', monospace;
+        .status-icon {
             font-weight: bold;
         }
-        
-        .status-value.success {
-            color: #48bb78;
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
         }
-        
-        .status-value.error {
-            color: #f56565;
-        }
-        
-        .status-value.warning {
-            color: #ed8936;
-        }
-        
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 16px 24px;
-            border-radius: 50px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        
-        button:active {
-            transform: scale(0.98);
-        }
-        
-        button:disabled {
-            opacity: 0.5;
-            transform: none;
-            cursor: not-allowed;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-        
-        .log-area {
-            background: rgba(0,0,0,0.6);
-            border-radius: 16px;
-            padding: 16px;
-            max-height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            margin-top: 20px;
-        }
-        
-        .log-entry {
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            color: #e2e8f0;
-        }
-        
-        .log-entry.info {
-            color: #90cdf4;
-        }
-        
-        .log-entry.success {
-            color: #9ae6b4;
-        }
-        
-        .log-entry.error {
-            color: #fc8181;
-        }
-        
-        .log-entry.warning {
-            color: #fbd38d;
-        }
-        
-        .flash-indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.01s;
-            z-index: 9999;
-        }
-        
-        .test-sound-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .test-sound-title {
-            color: white;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-        
-        .file-check {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 12px;
-            padding: 8px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .badge.success {
-            background: #48bb78;
-            color: white;
-        }
-        
-        .badge.error {
-            background: #f56565;
-            color: white;
-        }
-        
-        .badge.warning {
-            background: #ed8936;
-            color: white;
-        }
-        
-        .volume-slider {
-            width: 100%;
-            margin: 12px 0;
-        }
-        
         hr {
-            border: none;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            margin: 16px 0;
+            border-color: #2c2c2c;
         }
-        
-        .direct-link {
-            color: #90cdf4;
-            word-break: break-all;
-            font-size: 12px;
-            margin-top: 8px;
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
-        
-        .test-button {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            margin-top: 8px;
+        .checking-animation {
+            background: #2a2a2a;
+            transition: 0.05s;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔦 FlashModule Тест</h1>
-        <div class="subtitle">Тестирование вспышки и звука из ./sounds/scanner_photo1.wav</div>
+<div class="container">
+    <div class="header">
+        <h1>🎲 YouTube Random Key Hunter</h1>
+        <div class="sub">Генерация 9603 случайных ключей (11 символов) + проверка через превью YouTube.<br>
+        Если ширина превью отличается от 120px ИЛИ высота отличается от 90px → видео найдено (реальный ролик).</div>
         
-        <div class="status-card">
-            <div class="status-row">
-                <span class="status-label">📹 Камера:</span>
-                <span class="status-value" id="cameraStatus">—</span>
+        <div class="controls">
+            <div class="btn-group">
+                <button id="startBtn" class="primary">▶ ЗАПУСТИТЬ ПРОВЕРКУ (все записи)</button>
+                <button id="resetBtn">🔄 Сбросить + регенерировать ключи</button>
+                <button id="clearBtn">🗑 Очистить карточки</button>
             </div>
-            <div class="status-row">
-                <span class="status-label">🔊 Torch API:</span>
-                <span class="status-value" id="torchStatus">—</span>
-            </div>
-            <div class="status-row">
-                <span class="status-label">🎵 Звуковой файл:</span>
-                <span class="status-value" id="soundFileStatus">—</span>
-            </div>
-            <div class="status-row">
-                <span class="status-label">🎚️ Громкость:</span>
-                <span class="status-value" id="volumeValue">0.8</span>
+            <div class="stats">
+                📊 Всего записей: <span id="totalCount">0</span> &nbsp;|&nbsp;
+                🎯 НАЙДЕНО: <span id="foundCount">0</span> &nbsp;|&nbsp;
+                ✅ Проверено: <span id="checkedCount">0</span>
             </div>
         </div>
-        
-        <div class="test-sound-card">
-            <div class="test-sound-title">🎵 Тестирование звука без вспышки</div>
-            <div class="button-group">
-                <button id="testSoundOnlyBtn" class="btn-secondary">▶️ Только звук (файл)</button>
-                <button id="testSoundDirectBtn" class="btn-secondary test-button">🔊 Прямое воспроизведение Audio</button>
-                <button id="testBuiltinSoundBtn" class="btn-secondary">🎹 Только звук (встроенный)</button>
-            </div>
-            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.8">
-            <div class="file-check" id="fileCheckDisplay">
-                🔍 Проверка файла...
-            </div>
-            <div class="direct-link" id="directLink"></div>
-        </div>
-        
-        <div class="button-group">
-            <button id="playBtn" class="btn-primary">⚡ ВСПЫШКА + ЗВУК (файл)</button>
-            <button id="playBuiltinBtn" class="btn-primary">⚡ ВСПЫШКА + ЗВУК (встроенный)</button>
-            <button id="flashOnlyBtn" class="btn-danger">💡 Только вспышка</button>
-            <button id="releaseBtn" class="btn-secondary">🔒 Освободить камеру</button>
-            <button id="reinitBtn" class="btn-secondary">🔄 Переинициализировать</button>
-        </div>
-        
-        <div class="log-area" id="logArea">
-            <div class="log-entry info">🚀 Модуль загружен, начинаем тестирование...</div>
+        <div class="progress-area" id="progressArea">
+            ⚡ Статус: ожидание запуска
         </div>
     </div>
-    
-    <div class="flash-indicator" id="flashIndicator"></div>
-    
-    <script>
-        // ==================== FlashModule КЛАСС ====================
-        class FlashModule {
-            constructor(options = {}) {
-                this.options = {
-                    soundPath: './sounds/',  // ИСПРАВЛЕНО: используем относительный путь
-                    soundFile: null,
-                    flashDuration: 200,
-                    soundVolume: 0.8,
-                    useBuiltinSound: true,
-                    builtinSoundDuration: 3000,
-                    builtinSoundFrequency: 880,
-                    onReady: null,
-                    onError: null,
-                    onSoundStart: null,
-                    onSoundEnd: null,
-                    onFlashStart: null,
-                    onFlashEnd: null,
-                    debug: false,
-                    ...options
-                };
 
-                this.videoTrack = null;
-                this.mediaStream = null;
-                this.torchReady = false;
-                this.isFlashing = false;
-                this.isPlaying = false;
-                this.audioElement = null;
-                this.audioCtx = null;
-                this.useBuiltin = !this.options.soundFile;
-                
-                this.initCamera = this.initCamera.bind(this);
-                this.play = this.play.bind(this);
-                this.blink = this.blink.bind(this);
-                this.playSound = this.playSound.bind(this);
-                this.releaseCamera = this.releaseCamera.bind(this);
-            }
-            
-            getSoundUrl(fileName = null) {
-                const file = fileName || this.options.soundFile;
-                if (!file) return null;
-                const basePath = this.options.soundPath.replace(/\/$/, '');
-                return `${basePath}/${file}`;
-            }
-            
-            async initCamera() {
-                if (this.videoTrack && this.torchReady && this.videoTrack.readyState === 'live') {
-                    return true;
-                }
-                
-                if (this.videoTrack || this.mediaStream) {
-                    await this.releaseCamera();
-                }
-                
-                this._log("Инициализация камеры...");
-                
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: { exact: "environment" } }
-                    });
-                    
-                    this.mediaStream = stream;
-                    const tracks = stream.getVideoTracks();
-                    
-                    if (!tracks.length) {
-                        throw new Error("Нет видеодорожек");
-                    }
-                    
-                    this.videoTrack = tracks[0];
-                    
-                    let torchSupported = false;
-                    try {
-                        const caps = this.videoTrack.getCapabilities ? this.videoTrack.getCapabilities() : null;
-                        if (caps && caps.torch === true) torchSupported = true;
-                    } catch(e) {}
-                    
-                    if (!torchSupported) {
-                        try {
-                            await this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-                            torchSupported = true;
-                        } catch(e) {}
-                    }
-                    
-                    if (!torchSupported) {
-                        throw new Error("Torch API не поддерживается (нужен Android Chrome)");
-                    }
-                    
-                    await this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-                    this.torchReady = true;
-                    
-                    this._log("Камера готова");
-                    if (this.options.onReady) this.options.onReady();
-                    return true;
-                    
-                } catch (err) {
-                    this._logError("Ошибка:", err);
-                    if (this.options.onError) this.options.onError(err);
-                    return false;
-                }
-            }
-            
-            async _setTorch(state) {
-                if (!this.torchReady || !this.videoTrack) {
-                    throw new Error("Камера не готова");
-                }
-                await this.videoTrack.applyConstraints({
-                    advanced: [{ torch: state }]
-                });
-            }
-            
-            async blink(durationMs = null) {
-                const flashTime = durationMs !== null ? durationMs : this.options.flashDuration;
-                
-                if (this.isFlashing) return false;
-                
-                if (!this.torchReady) {
-                    const success = await this.initCamera();
-                    if (!success) return false;
-                }
-                
-                this.isFlashing = true;
-                if (this.options.onFlashStart) this.options.onFlashStart(flashTime);
-                
-                try {
-                    await this._setTorch(true);
-                    await new Promise(r => setTimeout(r, flashTime));
-                    await this._setTorch(false);
-                    if (this.options.onFlashEnd) this.options.onFlashEnd(flashTime);
-                    return true;
-                } catch (err) {
-                    this._logError("Ошибка вспышки:", err);
-                    try { await this._setTorch(false); } catch(e) {}
-                    return false;
-                } finally {
-                    this.isFlashing = false;
-                }
-            }
-            
-            async playSound(fileName = null) {
-                const targetFile = fileName || this.options.soundFile;
-                
-                if (targetFile) {
-                    const success = await this._playFileSound(targetFile);
-                    if (success) return true;
-                    this._log(`Файл не воспроизвелся, пробуем встроенный звук`);
-                }
-                
-                return this._playBuiltinSound();
-            }
-            
-            async _playFileSound(fileName) {
-                return new Promise((resolve) => {
-                    const soundUrl = this.getSoundUrl(fileName);
-                    if (!soundUrl) {
-                        resolve(false);
-                        return;
-                    }
-                    
-                    this._log(`Попытка воспроизвести: ${soundUrl}`);
-                    
-                    const audio = new Audio();
-                    audio.src = soundUrl;
-                    audio.volume = this.options.soundVolume;
-                    audio.preload = 'auto';
-                    
-                    let resolved = false;
-                    
-                    const onCanPlay = () => {
-                        this._log(`Аудио загружено, воспроизводим...`);
-                        audio.play().then(() => {
-                            if (!resolved) {
-                                resolved = true;
-                                if (this.options.onSoundStart) this.options.onSoundStart(fileName);
-                                resolve(true);
-                            }
-                        }).catch(err => {
-                            this._log(`Ошибка play(): ${err.message}`);
-                            if (!resolved) {
-                                resolved = true;
-                                resolve(false);
-                            }
-                        });
-                    };
-                    
-                    const onError = (e) => {
-                        this._log(`Ошибка загрузки: ${audio.error ? audio.error.code : 'unknown'}`);
-                        if (!resolved) {
-                            resolved = true;
-                            resolve(false);
-                        }
-                    };
-                    
-                    const onEnded = () => {
-                        if (this.options.onSoundEnd) this.options.onSoundEnd();
-                    };
-                    
-                    audio.addEventListener('canplaythrough', onCanPlay);
-                    audio.addEventListener('error', onError);
-                    audio.addEventListener('ended', onEnded);
-                    
-                    audio.load();
-                    
-                    setTimeout(() => {
-                        if (!resolved) {
-                            resolved = true;
-                            this._log(`Таймаут загрузки аудио`);
-                            resolve(false);
-                        }
-                    }, 5000);
-                });
-            }
-            
-            async _playBuiltinSound() {
-                const duration = this.options.builtinSoundDuration;
-                const frequency = this.options.builtinSoundFrequency;
-                
-                if (!window.AudioContext && !window.webkitAudioContext) {
-                    this._log("Web Audio не поддерживается");
-                    return false;
-                }
-                
-                if (!this.audioCtx) {
-                    try {
-                        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    } catch(e) {
-                        this._logError("Не удалось создать AudioContext");
-                        return false;
-                    }
-                }
-                
-                if (this.audioCtx.state === 'suspended') {
-                    await this.audioCtx.resume();
-                }
-                
-                return new Promise((resolve) => {
-                    const now = this.audioCtx.currentTime;
-                    const durationSec = duration / 1000;
-                    
-                    const gainNode = this.audioCtx.createGain();
-                    gainNode.gain.setValueAtTime(this.options.soundVolume, now);
-                    const fadeStart = Math.max(0, durationSec - 0.3);
-                    gainNode.gain.setValueAtTime(this.options.soundVolume, now + fadeStart);
-                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
-                    
-                    const oscillator = this.audioCtx.createOscillator();
-                    oscillator.type = 'sine';
-                    oscillator.frequency.value = frequency;
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioCtx.destination);
-                    oscillator.start();
-                    oscillator.stop(now + durationSec);
-                    
-                    if (this.options.onSoundStart) this.options.onSoundStart('[встроенный звук]');
-                    
-                    setTimeout(() => {
-                        if (this.options.onSoundEnd) this.options.onSoundEnd();
-                        resolve(true);
-                    }, duration + 20);
-                });
-            }
-            
-            async play() {
-                if (this.isPlaying) {
-                    this._log("Уже выполняется");
-                    return false;
-                }
-                
-                this.isPlaying = true;
-                
-                const cameraPromise = this.initCamera();
-                
-                await this.playSound();
-                
-                await cameraPromise;
-                await new Promise(r => setTimeout(r, 40));
-                const result = await this.blink();
-                
-                this.isPlaying = false;
-                return result;
-            }
-            
-            async releaseCamera() {
-                if (this.videoTrack) {
-                    try {
-                        await this._setTorch(false);
-                        this.videoTrack.stop();
-                    } catch(e) {}
-                    this.videoTrack = null;
-                }
-                if (this.mediaStream) {
-                    this.mediaStream.getTracks().forEach(track => track.stop());
-                    this.mediaStream = null;
-                }
-                this.torchReady = false;
-            }
-            
-            destroy() {
-                this.releaseCamera();
-                if (this.audioCtx) {
-                    this.audioCtx.close().catch(()=>{});
-                    this.audioCtx = null;
-                }
-                this.isPlaying = false;
-                this.isFlashing = false;
-            }
-            
-            setVolume(vol) {
-                this.options.soundVolume = Math.min(1, Math.max(0, vol));
-            }
-            
-            _log(...args) {
-                if (this.options.debug) console.log("[FlashModule]", ...args);
-            }
-            
-            _logError(...args) {
-                console.error("[FlashModule]", ...args);
-            }
-        }
+    <div id="cardsGrid" class="grid">
+        <!-- динамические карточки -->
+        <div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">Нажмите "Запустить проверку" для генерации 9603 ключей и сканирования</div>
+    </div>
+    <footer>🔍 Примечание: проверка использует img.youtube.com/vi/ID/hqdefault.jpg. Если YouTube возвращает изображение с реальными размерами (не 120x90) — значит видео существует. Процесс идёт поочередно, задержка 35мс между проверками для уважения к API.</footer>
+</div>
 
-        // ==================== ТЕСТОВЫЙ СКРИПТ ====================
-        let flashModule = null;
+<script>
+    // ---------- конфигурация ----------
+    const TOTAL_DAYS = 9603;        // с 01.01.2000 по 16.04.2026 (ровно 9603 дня)
+    const CHECK_DELAY_MS = 38;      // пауза между проверками (мягкий перебор)
+    let currentKeys = [];            // массив объектов { id, status, width, height, checked }
+    let currentCheckIndex = 0;
+    let isCheckingActive = false;
+    let checkTimeoutId = null;
+    let abortController = null;      // для остановки цепочки
+    
+    // DOM элементы
+    const gridContainer = document.getElementById('cardsGrid');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const totalCountSpan = document.getElementById('totalCount');
+    const foundCountSpan = document.getElementById('foundCount');
+    const checkedCountSpan = document.getElementById('checkedCount');
+    const progressArea = document.getElementById('progressArea');
+    
+    // ---------- генерация рандомного ключа (11 символов, набор A-Z a-z 0-9 - _) ----------
+    const KEY_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    function generateRandomKey() {
+        let result = '';
+        for (let i = 0; i < 11; i++) {
+            const randomIndex = Math.floor(Math.random() * KEY_CHARS.length);
+            result += KEY_CHARS[randomIndex];
+        }
+        return result;
+    }
+    
+    // генерация массива из TOTAL_DAYS уникальных? (не требуется уникальность, но для правдоподобия оставим возможно повтор, норм)
+    function generateFreshKeyArray() {
+        const arr = [];
+        for (let i = 0; i < TOTAL_DAYS; i++) {
+            arr.push({
+                id: generateRandomKey(),
+                status: 'pending',     // 'pending', 'found', 'not_found'
+                width: null,
+                height: null,
+                checked: false,
+                imageUrl: null
+            });
+        }
+        return arr;
+    }
+    
+    // Обновление UI карточек (рендер всей сетки) — но чтобы не лагать, будем рендерить всю сетку после изменений статуса (оптимизировано)
+    function renderCards() {
+        if (!gridContainer) return;
+        if (!currentKeys.length) {
+            gridContainer.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#666;">Нет данных. Нажмите "Сбросить" для генерации ключей.</div>`;
+            return;
+        }
         
-        const cameraStatusEl = document.getElementById('cameraStatus');
-        const torchStatusEl = document.getElementById('torchStatus');
-        const soundFileStatusEl = document.getElementById('soundFileStatus');
-        const volumeValueEl = document.getElementById('volumeValue');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const logArea = document.getElementById('logArea');
-        const flashIndicator = document.getElementById('flashIndicator');
-        const directLinkEl = document.getElementById('directLink');
-        
-        const SOUND_URL = './sounds/scanner_photo1.wav';
-        
-        function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.className = `log-entry ${type}`;
-            logEntry.textContent = `[${timestamp}] ${message}`;
-            logArea.appendChild(logEntry);
-            logArea.scrollTop = logArea.scrollHeight;
-            
-            while (logArea.children.length > 100) {
-                logArea.removeChild(logArea.firstChild);
+        let html = '';
+        for (let i = 0; i < currentKeys.length; i++) {
+            const item = currentKeys[i];
+            const isFound = (item.status === 'found');
+            const isChecked = item.checked;
+            let badgeClass = 'missing';
+            let badgeText = '❓ не проверено';
+            let statusIcon = '⏳';
+            if (isChecked) {
+                if (isFound) {
+                    badgeClass = 'found';
+                    badgeText = '✅ ВИДЕО НАЙДЕНО!';
+                    statusIcon = '🎬';
+                } else {
+                    badgeClass = 'missing';
+                    badgeText = '❌ видео нет / превью 120x90';
+                    statusIcon = '🕳️';
+                }
+            } else {
+                badgeText = '⌛ ожидает проверки';
+                statusIcon = '🔍';
             }
             
-            console.log(`[${type.toUpperCase()}] ${message}`);
+            // отображение размеров если есть
+            let dimsInfo = '';
+            if (item.width && item.height && isChecked) {
+                dimsInfo = `${item.width}×${item.height}`;
+            } else if (isChecked && !isFound && item.width && item.height) {
+                dimsInfo = `${item.width}×${item.height} (def)`;
+            } else if (!isChecked) {
+                dimsInfo = '—';
+            } else {
+                dimsInfo = '—';
+            }
+            
+            // отображение превью или заглушка
+            let thumbnailHtml = '';
+            if (isChecked && isFound && item.imageUrl) {
+                thumbnailHtml = `<img src="${item.imageUrl}" alt="preview" style="max-width:100%; max-height:140px; border-radius:12px;" onerror="this.onerror=null;this.src='';this.alt='ошибка'">`;
+            } else if (isChecked && isFound) {
+                // fallback если вдруг нет url
+                thumbnailHtml = `<div class="img-placeholder">🎥 превью доступно (настоящее видео)</div>`;
+            } else if (isChecked && !isFound) {
+                thumbnailHtml = `<div class="img-placeholder">🖼️ стандартная заглушка 120x90<br>(видео не существует или удалено)</div>`;
+            } else {
+                thumbnailHtml = `<div class="img-placeholder">⏳ превью будет загружено при проверке</div>`;
+            }
+            
+            html += `
+                <div class="video-card" data-idx="${i}">
+                    <div class="card-header">
+                        <span class="video-id">🔑 ${escapeHtml(item.id)}</span>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="thumbnail-preview">
+                        ${thumbnailHtml}
+                    </div>
+                    <div class="info-row">
+                        <span>📐 размер превью: ${dimsInfo}</span>
+                        <span class="status-icon">${statusIcon}</span>
+                    </div>
+                </div>
+            `;
+        }
+        gridContainer.innerHTML = html;
+        updateStatsDisplay();
+    }
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // обновление счетчиков
+    function updateStatsDisplay() {
+        if (!currentKeys.length) {
+            totalCountSpan.innerText = '0';
+            foundCountSpan.innerText = '0';
+            checkedCountSpan.innerText = '0';
+            return;
+        }
+        const total = currentKeys.length;
+        const checked = currentKeys.filter(k => k.checked === true).length;
+        const found = currentKeys.filter(k => k.status === 'found').length;
+        totalCountSpan.innerText = total;
+        foundCountSpan.innerText = found;
+        checkedCountSpan.innerText = checked;
+    }
+    
+    // показать сообщение в progress-area
+    function setProgressMessage(msg, isError = false) {
+        if (progressArea) {
+            progressArea.innerHTML = `🔄 ${msg}`;
+            if (isError) progressArea.style.borderLeftColor = '#ff4444';
+            else progressArea.style.borderLeftColor = '#cc0000';
+        }
+    }
+    
+    // проверка одного ключа через загрузку изображения (промис с определением размеров)
+    function checkVideoKey(keyObj, keyId) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const testUrl = `https://img.youtube.com/vi/${keyId}/hqdefault.jpg`;
+            let resolved = false;
+            
+            const timeout = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    // таймаут: считаем что видео нет (ошибка загрузки)
+                    keyObj.status = 'not_found';
+                    keyObj.checked = true;
+                    keyObj.width = null;
+                    keyObj.height = null;
+                    keyObj.imageUrl = null;
+                    resolve(false);
+                }
+            }, 4000);
+            
+            img.onload = () => {
+                if (resolved) return;
+                clearTimeout(timeout);
+                const naturalW = img.naturalWidth;
+                const naturalH = img.naturalHeight;
+                // сохраняем размеры
+                keyObj.width = naturalW;
+                keyObj.height = naturalH;
+                keyObj.imageUrl = testUrl;
+                // КЛЮЧЕВОЕ УСЛОВИЕ: если ширина отличается от 120 ИЛИ высота отличается от 90 — видео найдено (реальный контент)
+                const isRealVideo = (naturalW !== 120 || naturalH !== 90);
+                if (isRealVideo) {
+                    keyObj.status = 'found';
+                } else {
+                    keyObj.status = 'not_found';
+                }
+                keyObj.checked = true;
+                resolved = true;
+                resolve(isRealVideo);
+            };
+            
+            img.onerror = () => {
+                if (resolved) return;
+                clearTimeout(timeout);
+                // ошибка загрузки — видео не существует (нет превью)
+                keyObj.status = 'not_found';
+                keyObj.checked = true;
+                keyObj.width = null;
+                keyObj.height = null;
+                keyObj.imageUrl = null;
+                resolved = true;
+                resolve(false);
+            };
+            
+            img.src = testUrl;
+            // дополнительно: если изображение уже в кеше, onload сработает
+        });
+    }
+    
+    // пошаговая проверка всей очереди
+    async function startSequentialCheck() {
+        if (isCheckingActive) {
+            setProgressMessage('⚠️ Проверка уже запущена! Подождите или сбросьте.');
+            return;
+        }
+        if (!currentKeys.length) {
+            setProgressMessage('❌ Массив пуст. Нажмите "Сбросить + регенерировать" сначала.');
+            return;
+        }
+        // сбросим предыдущие прерывания
+        if (checkTimeoutId) clearTimeout(checkTimeoutId);
+        isCheckingActive = true;
+        currentCheckIndex = 0;
+        
+        // найдем первый непроверенный индекс
+        while (currentCheckIndex < currentKeys.length && currentKeys[currentCheckIndex].checked === true) {
+            currentCheckIndex++;
+        }
+        if (currentCheckIndex >= currentKeys.length) {
+            setProgressMessage('✅ Все записи уже проверены! Сбросьте массив для новой генерации.');
+            isCheckingActive = false;
+            renderCards();
+            return;
         }
         
-        function visualFlash(duration = 200) {
-            flashIndicator.style.transition = `opacity ${duration}ms`;
-            flashIndicator.style.opacity = '1';
-            setTimeout(() => {
-                flashIndicator.style.opacity = '0';
-            }, duration);
-        }
+        setProgressMessage(`🔎 Начинаем проверку... (всего ${currentKeys.length} ключей)`);
+        renderCards();  // рендер перед стартом
         
-        async function checkSoundFileDirect() {
-            addLog(`🔍 Проверка файла: ${SOUND_URL}`, 'info');
-            directLinkEl.innerHTML = `📁 Прямая ссылка: <a href="${SOUND_URL}" target="_blank">${SOUND_URL}</a>`;
+        const processNext = async () => {
+            if (!isCheckingActive) {
+                setProgressMessage('⏸️ Проверка остановлена пользователем.');
+                renderCards();
+                return;
+            }
+            if (currentCheckIndex >= currentKeys.length) {
+                setProgressMessage(`✅ ПРОВЕРКА ЗАВЕРШЕНА! Найдено реальных видео: ${currentKeys.filter(k=>k.status==='found').length} из ${currentKeys.length}`);
+                isCheckingActive = false;
+                renderCards();
+                return;
+            }
+            
+            const currentItem = currentKeys[currentCheckIndex];
+            const currentId = currentItem.id;
+            // Обновляем текущий статус в прогресс-баре
+            setProgressMessage(`🔍 Проверка [${currentCheckIndex+1}/${currentKeys.length}] ключ: ${currentId} — ожидание ответа...`);
+            // небольшая визуальная подсветка
+            renderCards();  // для отображения индекса и текущего состояния, но рендер на каждом шаге норм?
+            // Рендер на каждый шаг немного затратно но для 9603 раз норм, но можно сделать облегченный вариант
+            // зато пользователь видит текущие изменения
             
             try {
-                const response = await fetch(SOUND_URL);
-                addLog(`📡 Статус: ${response.status} ${response.statusText}`, 'info');
-                
-                if (response.ok) {
-                    const blob = await response.blob();
-                    addLog(`✅ Файл найден! Размер: ${blob.size} байт`, 'success');
-                    soundFileStatusEl.innerHTML = '<span class="badge success">✅ Файл доступен</span><br><span style="font-size:11px">' + SOUND_URL + '<br>' + blob.size + ' байт</span>';
-                    return true;
+                const found = await checkVideoKey(currentItem, currentId);
+                if (found) {
+                    setProgressMessage(`🎉 НАЙДЕНО ВИДЕО! [${currentCheckIndex+1}/${currentKeys.length}] ${currentId} → превью не 120x90 (${currentItem.width}×${currentItem.height})`);
                 } else {
-                    addLog(`❌ Файл не доступен, статус: ${response.status}`, 'error');
-                    soundFileStatusEl.innerHTML = '<span class="badge error">❌ Файл не доступен</span>';
-                    return false;
+                    setProgressMessage(`❌ [${currentCheckIndex+1}/${currentKeys.length}] ${currentId} — не найдено (размеры: ${currentItem.width || 'ошибка'}x${currentItem.height || '—'})`);
                 }
-            } catch(e) {
-                addLog(`❌ Ошибка: ${e.message}`, 'error');
-                soundFileStatusEl.innerHTML = '<span class="badge error">⚠️ Ошибка доступа</span>';
-                return false;
-            }
-        }
-        
-        function directAudioPlay() {
-            addLog(`🔊 Прямое воспроизведение через Audio API`, 'info');
-            addLog(`📁 URL: ${SOUND_URL}`, 'info');
-            
-            const audio = new Audio();
-            audio.src = SOUND_URL;
-            audio.volume = volumeSlider.value;
-            
-            audio.oncanplaythrough = () => {
-                addLog(`✅ Аудио загружено`, 'success');
-                audio.play().then(() => {
-                    addLog(`✅ Звук воспроизводится!`, 'success');
-                    setTimeout(() => {
-                        audio.pause();
-                        addLog(`⏸️ Остановлено`, 'info');
-                    }, 3000);
-                }).catch(err => {
-                    addLog(`❌ Ошибка: ${err.message}`, 'error');
-                });
-            };
-            
-            audio.onerror = () => {
-                addLog(`❌ Ошибка загрузки`, 'error');
-            };
-            
-            audio.load();
-        }
-        
-        function updateCameraStatus() {
-            if (!flashModule) {
-                cameraStatusEl.innerHTML = '<span class="badge warning">⚠️ Модуль не инициализирован</span>';
-                torchStatusEl.innerHTML = '<span class="badge warning">❓ Неизвестно</span>';
-                return;
+            } catch (err) {
+                console.warn(err);
+                currentItem.status = 'not_found';
+                currentItem.checked = true;
+                setProgressMessage(`⚠️ Ошибка при проверке ${currentId}: ${err.message}`);
             }
             
-            if (flashModule.torchReady && flashModule.videoTrack) {
-                cameraStatusEl.innerHTML = '<span class="badge success">✅ Готова</span>';
-                torchStatusEl.innerHTML = '<span class="badge success">✅ Поддерживается</span>';
-            } else if (flashModule.videoTrack) {
-                cameraStatusEl.innerHTML = '<span class="badge warning">⚠️ Инициализация...</span>';
-                torchStatusEl.innerHTML = '<span class="badge warning">⚠️ Проверка...</span>';
+            // обновляем карточку и счетчики
+            renderCards();
+            currentCheckIndex++;
+            
+            // задержка перед следующим запросом (гуманный интервал)
+            if (isCheckingActive && currentCheckIndex < currentKeys.length) {
+                checkTimeoutId = setTimeout(() => {
+                    processNext();
+                }, CHECK_DELAY_MS);
+            } else if (currentCheckIndex >= currentKeys.length) {
+                setProgressMessage(`🏁 ФИНИШ! Всего проверено ${currentKeys.length}. Найдено видео: ${currentKeys.filter(k=>k.status==='found').length}`);
+                isCheckingActive = false;
+                renderCards();
             } else {
-                cameraStatusEl.innerHTML = '<span class="badge warning">⏳ Не инициализирована</span>';
-                torchStatusEl.innerHTML = '<span class="badge warning">❓ Неизвестно</span>';
+                // если isCheckingActive false
+                renderCards();
             }
-        }
+        };
         
-        async function testSoundOnly() {
-            addLog(`🎵 Тестирование звука...`, 'info');
-            
-            if (!flashModule) {
-                addLog(`❌ Модуль не инициализирован`, 'error');
-                return;
-            }
-            
-            flashModule.options.debug = true;
-            flashModule.options.soundFile = 'scanner_photo1.wav';
-            
-            const result = await flashModule.playSound('scanner_photo1.wav');
-            
-            if (result) {
-                addLog(`✅ Звук воспроизведён!`, 'success');
-            } else {
-                addLog(`❌ Звук не воспроизвёлся`, 'error');
-            }
+        // запускаем цепочку
+        processNext();
+    }
+    
+    // остановка проверки
+    function stopChecking() {
+        if (checkTimeoutId) {
+            clearTimeout(checkTimeoutId);
+            checkTimeoutId = null;
         }
-        
-        async function testBuiltinSound() {
-            addLog(`🎹 Встроенный звук...`, 'info');
-            
-            if (!flashModule) {
-                addLog(`❌ Модуль не инициализирован`, 'error');
-                return;
-            }
-            
-            const result = await flashModule._playBuiltinSound();
-            
-            if (result) {
-                addLog(`✅ Встроенный звук воспроизведён`, 'success');
-            } else {
-                addLog(`❌ Встроенный звук не воспроизвёлся`, 'error');
-            }
+        isCheckingActive = false;
+        setProgressMessage('Проверка прервана. Нажмите "Запустить" для продолжения (продолжит с того же места).');
+        renderCards();
+    }
+    
+    // сброс и новая генерация (с полной очисткой)
+    function resetAndGenerate() {
+        stopChecking();
+        currentKeys = generateFreshKeyArray();
+        currentCheckIndex = 0;
+        isCheckingActive = false;
+        renderCards();
+        setProgressMessage(`✨ Сгенерировано ${TOTAL_DAYS} случайных ключей. Нажмите "ЗАПУСТИТЬ ПРОВЕРКУ" для поиска реальных видео.`);
+        updateStatsDisplay();
+    }
+    
+    // полная очистка (удалить карточки)
+    function clearCards() {
+        stopChecking();
+        currentKeys = [];
+        currentCheckIndex = 0;
+        isCheckingActive = false;
+        renderCards();
+        setProgressMessage('🗑 Массив очищен. Сбросьте для генерации новых ключей.');
+        totalCountSpan.innerText = '0';
+        foundCountSpan.innerText = '0';
+        checkedCountSpan.innerText = '0';
+    }
+    
+    // запуск или продолжение проверки (если прервана)
+    function startOrResume() {
+        if (isCheckingActive) {
+            setProgressMessage('Проверка уже активна!');
+            return;
         }
-        
-        async function testFullPlay(useBuiltin = false) {
-            if (!flashModule) {
-                addLog(`❌ Модуль не инициализирован`, 'error');
-                return;
-            }
-            
-            addLog(`🎬 Запуск: ${useBuiltin ? 'встроенный звук' : 'файл'} + вспышка`, 'info');
-            
-            if (!useBuiltin) {
-                flashModule.options.soundFile = 'scanner_photo1.wav';
-            }
-            
-            flashModule.options.onFlashStart = (duration) => {
-                addLog(`💡 Вспышка на ${duration}мс`, 'info');
-                visualFlash(duration);
-            };
-            flashModule.options.onFlashEnd = () => addLog(`💡 Вспышка выключена`, 'info');
-            flashModule.options.onSoundStart = (sound) => addLog(`🔊 Звук начал: ${sound}`, 'success');
-            flashModule.options.onSoundEnd = () => addLog(`🔇 Звук закончился`, 'info');
-            
-            const result = await flashModule.play();
-            
-            if (result) {
-                addLog(`✅ Тест успешен!`, 'success');
-            } else {
-                addLog(`❌ Тест не удался`, 'error');
-            }
+        if (!currentKeys.length) {
+            setProgressMessage('Нет ключей! Сначала нажмите "Сбросить + регенерировать"');
+            return;
         }
-        
-        async function testFlashOnly() {
-            if (!flashModule) {
-                addLog(`❌ Модуль не инициализирован`, 'error');
-                return;
-            }
-            
-            addLog(`💡 Только вспышка...`, 'info');
-            
-            const success = await flashModule.initCamera();
-            if (!success) {
-                addLog(`❌ Камера не инициализирована`, 'error');
-                return;
-            }
-            
-            visualFlash(flashModule.options.flashDuration);
-            const result = await flashModule.blink();
-            
-            if (result) {
-                addLog(`✅ Вспышка сработала`, 'success');
-            } else {
-                addLog(`❌ Вспышка не сработала`, 'error');
-            }
+        // если уже всё проверено, предложим сбросить
+        const allChecked = currentKeys.length > 0 && currentKeys.every(k => k.checked === true);
+        if (allChecked) {
+            setProgressMessage('Все ключи уже проверены. Для новой генерации нажмите "Сбросить".');
+            return;
         }
-        
-        async function init() {
-            addLog(`🚀 Инициализация...`, 'info');
-            
-            await checkSoundFileDirect();
-            
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                addLog(`❌ getUserMedia не поддерживается`, 'error');
-            }
-            
-            flashModule = new FlashModule({
-                soundPath: './sounds/',
-                soundFile: 'scanner_photo1.wav',
-                flashDuration: 200,
-                soundVolume: 0.8,
-                useBuiltinSound: true,
-                debug: true,
-                onReady: () => {
-                    addLog(`✅ Камера готова!`, 'success');
-                    updateCameraStatus();
-                },
-                onError: (err) => {
-                    addLog(`❌ Ошибка: ${err.message}`, 'error');
-                    updateCameraStatus();
-                }
-            });
-            
-            addLog(`✅ Модуль создан`, 'success');
-            updateCameraStatus();
-        }
-        
-        function setupEventHandlers() {
-            document.getElementById('playBtn').onclick = () => testFullPlay(false);
-            document.getElementById('playBuiltinBtn').onclick = () => testFullPlay(true);
-            document.getElementById('flashOnlyBtn').onclick = () => testFlashOnly();
-            document.getElementById('testSoundOnlyBtn').onclick = () => testSoundOnly();
-            document.getElementById('testSoundDirectBtn').onclick = () => directAudioPlay();
-            document.getElementById('testBuiltinSoundBtn').onclick = () => testBuiltinSound();
-            document.getElementById('releaseBtn').onclick = () => {
-                if (flashModule) {
-                    flashModule.releaseCamera();
-                    addLog(`🔒 Камера освобождена`, 'info');
-                    updateCameraStatus();
-                }
-            };
-            document.getElementById('reinitBtn').onclick = async () => {
-                if (flashModule) {
-                    await flashModule.releaseCamera();
-                    await flashModule.initCamera();
-                    addLog(`🔄 Переинициализирована`, 'info');
-                    updateCameraStatus();
-                }
-            };
-            
-            volumeSlider.oninput = (e) => {
-                const vol = parseFloat(e.target.value);
-                if (flashModule) flashModule.setVolume(vol);
-                volumeValueEl.textContent = vol.toFixed(2);
-            };
-        }
-        
-        init();
-        setupEventHandlers();
-    </script>
+        startSequentialCheck();
+    }
+    
+    // обработчики
+    startBtn.addEventListener('click', startOrResume);
+    resetBtn.addEventListener('click', resetAndGenerate);
+    clearBtn.addEventListener('click', clearCards);
+    
+    // инициализация: генерируем массив при первом запуске? для удобства сгенерируем, но не проверяем
+    (function init() {
+        currentKeys = generateFreshKeyArray();
+        renderCards();
+        setProgressMessage(`📀 Сформирован массив из ${TOTAL_DAYS} случайных ключей (11 символов). Для поиска нажмите "ЗАПУСТИТЬ ПРОВЕРКУ". Видео считается найденным, если превью имеет размер, отличный от 120x90 пикселей.`);
+        updateStatsDisplay();
+    })();
+    
+    // дополнительная защита от бесконечных циклов при выгрузке
+    window.addEventListener('beforeunload', () => {
+        if (checkTimeoutId) clearTimeout(checkTimeoutId);
+        isCheckingActive = false;
+    });
+</script>
 </body>
 </html>
