@@ -27,6 +27,7 @@ class FlashModule {
         this.isFlashing = false;
         this.isPlaying = false;
         this.audioElement = null;
+        this._audioObjectUrl = null;
         this.audioCtx = null;
         this._builtinOscillator = null;
         this._builtinGain = null;
@@ -70,7 +71,14 @@ class FlashModule {
         const url = this.getSoundUrl(fileName);
         if (!url) return false;
         try {
-            const response = await fetch(url + '?t=' + Date.now(), { method: 'HEAD' });
+            const response = await fetch(this._cacheBustUrl(url), {
+                method: 'GET',
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            });
             return response.ok;
         } catch(e) {
             return false;
@@ -82,6 +90,28 @@ class FlashModule {
         if (!file) return null;
         const basePath = this.options.soundPath.replace(/\/$/, '');
         return `${basePath}/${file}`;
+    }
+
+    _cacheBustUrl(url) {
+        const sep = String(url).indexOf('?') >= 0 ? '&' : '?';
+        return url + sep + 'nocache=' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    }
+
+    async _fetchSoundObjectUrl(fileName) {
+        const soundUrl = this.getSoundUrl(fileName);
+        if (!soundUrl) return null;
+        const response = await fetch(this._cacheBustUrl(soundUrl), {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        if (!blob || blob.size === 0) return null;
+        return URL.createObjectURL(blob);
     }
     
     async initCamera() {
@@ -198,6 +228,10 @@ class FlashModule {
             } catch (e) {}
             this.audioElement = null;
         }
+        if (this._audioObjectUrl) {
+            try { URL.revokeObjectURL(this._audioObjectUrl); } catch (e) {}
+            this._audioObjectUrl = null;
+        }
     }
 
     async playSound(fileName = null) {
@@ -218,18 +252,21 @@ class FlashModule {
     
     async _playFileSound(fileName) {
         this._stopActiveSound();
+        let objectUrl = null;
+        try {
+            objectUrl = await this._fetchSoundObjectUrl(fileName);
+        } catch (e) {
+            return false;
+        }
+        if (!objectUrl) return false;
+
+        this._audioObjectUrl = objectUrl;
+
         return new Promise((resolve) => {
-            const soundUrl = this.getSoundUrl(fileName);
-            if (!soundUrl) {
-                resolve(false);
-                return;
-            }
-            
-            const urlWithCacheBust = soundUrl + '?t=' + Date.now();
             const audio = new Audio();
-            audio.src = urlWithCacheBust;
-            audio.volume = this.options.soundVolume;
             audio.preload = 'auto';
+            audio.volume = this.options.soundVolume;
+            audio.src = objectUrl;
             
             let resolved = false;
             let started = false;
@@ -241,6 +278,10 @@ class FlashModule {
                 resolved = true;
                 if (safetyTimer) clearTimeout(safetyTimer);
                 if (durationTimer) clearTimeout(durationTimer);
+                if (this._audioObjectUrl === objectUrl) {
+                    try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+                    this._audioObjectUrl = null;
+                }
                 resolve(ok);
             };
             
@@ -248,8 +289,6 @@ class FlashModule {
                 if (started) return;
                 started = true;
                 if (this.options.onSoundStart) this.options.onSoundStart(fileName);
-                // Если ended не придёт — всё равно считаем успехом (файл уже слышен).
-                // Иначе playSound уйдёт в 3с builtin → long→shutter→long.
                 const ms = (isFinite(audio.duration) && audio.duration > 0)
                     ? Math.min(8000, audio.duration * 1000 + 150)
                     : 2000;
