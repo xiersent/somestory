@@ -1,17 +1,15 @@
-// flash-module.js
-// Модуль вспышки со звуками из каталога /sounds/ (или встроенный звук, если файлов нет)
-
+// vendor/js/flash.js
 class FlashModule {
     constructor(options = {}) {
-        // Настройки
         this.options = {
-            soundPath: '/sounds/',           // путь к каталогу со звуками
-            soundFile: null,                 // если null — используем встроенный звук
-            flashDuration: 200,              // длительность вспышки (мс)
-            soundVolume: 0.8,                // громкость 0-1
-            useBuiltinSound: true,           // использовать встроенный звук, если файл не найден
-            builtinSoundDuration: 3000,      // длительность встроенного звука (мс)
-            builtinSoundFrequency: 880,      // частота встроенного звука
+            soundPath: './sounds/',
+            soundFile: null,
+            flashDuration: 200,
+            soundVolume: 0.8,
+            useBuiltinSound: true,
+            builtinSoundDuration: 3000,
+            builtinSoundFrequency: 880,
+            soundEnabled: true,
             onReady: null,
             onError: null,
             onSoundStart: null,
@@ -22,7 +20,6 @@ class FlashModule {
             ...options
         };
 
-        // Внутреннее состояние
         this.videoTrack = null;
         this.mediaStream = null;
         this.torchReady = false;
@@ -30,14 +27,15 @@ class FlashModule {
         this.isPlaying = false;
         this.audioElement = null;
         this.audioCtx = null;
-        this.useBuiltin = !this.options.soundFile; // если файл не указан — используем встроенный
+        this.useBuiltin = !this.options.soundFile;
         
-        // Привязка методов
         this.initCamera = this.initCamera.bind(this);
         this.play = this.play.bind(this);
+        this.playFlashWithSound = this.playFlashWithSound.bind(this);
+        this.playOnlyFlash = this.playOnlyFlash.bind(this);
+        this.playOnlySound = this.playOnlySound.bind(this);
         this.blink = this.blink.bind(this);
         this.playSound = this.playSound.bind(this);
-        this.setSound = this.setSound.bind(this);
         this.releaseCamera = this.releaseCamera.bind(this);
         
         if (options.autoInit) {
@@ -45,43 +43,36 @@ class FlashModule {
         }
     }
     
-    // Установка звукового файла (проверяет существование)
     async setSound(fileName) {
         if (!fileName) {
             this.useBuiltin = true;
             this.options.soundFile = null;
-            this._log("Переключено на встроенный звук");
             return true;
         }
         
         this.options.soundFile = fileName;
-        
-        // Проверяем, существует ли файл
         const exists = await this._checkSoundFile(fileName);
         
         if (exists) {
             this.useBuiltin = false;
-            this._log(`Звук установлен: ${fileName}`);
             return true;
         } else {
-            this._log(`Файл ${fileName} не найден, используем встроенный звук`);
             this.useBuiltin = true;
             return false;
         }
     }
     
-    // Проверка существования звукового файла
     async _checkSoundFile(fileName) {
         const url = this.getSoundUrl(fileName);
+        if (!url) return false;
         try {
-            const response = await fetch(url, { method: 'HEAD' });
+            const response = await fetch(url + '?t=' + Date.now(), { method: 'HEAD' });
             return response.ok;
         } catch(e) {
             return false;
         }
     }
     
-    // Получить полный URL звукового файла
     getSoundUrl(fileName = null) {
         const file = fileName || this.options.soundFile;
         if (!file) return null;
@@ -89,7 +80,6 @@ class FlashModule {
         return `${basePath}/${file}`;
     }
     
-    // Инициализация камеры
     async initCamera() {
         if (this.videoTrack && this.torchReady && this.videoTrack.readyState === 'live') {
             return true;
@@ -99,7 +89,7 @@ class FlashModule {
             await this.releaseCamera();
         }
         
-        this._log("Инициализация камеры...");
+        if (this.options.debug) console.log("[FlashModule] Инициализация камеры...");
         
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -117,8 +107,8 @@ class FlashModule {
             
             let torchSupported = false;
             try {
-                const caps = this.videoTrack.getCapabilities ? this.videoTrack.getCapabilities() : null;
-                if (caps && caps.torch === true) torchSupported = true;
+                const caps = this.videoTrack.getCapabilities();
+                torchSupported = caps && caps.torch === true;
             } catch(e) {}
             
             if (!torchSupported) {
@@ -135,12 +125,12 @@ class FlashModule {
             await this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
             this.torchReady = true;
             
-            this._log("Камера готова");
+            if (this.options.debug) console.log("[FlashModule] Камера готова");
             if (this.options.onReady) this.options.onReady();
             return true;
             
         } catch (err) {
-            this._logError("Ошибка:", err);
+            console.error("[FlashModule] Ошибка:", err);
             if (this.options.onError) this.options.onError(err);
             return false;
         }
@@ -175,7 +165,6 @@ class FlashModule {
             if (this.options.onFlashEnd) this.options.onFlashEnd(flashTime);
             return true;
         } catch (err) {
-            this._logError("Ошибка вспышки:", err);
             try { await this._setTorch(false); } catch(e) {}
             return false;
         } finally {
@@ -183,24 +172,22 @@ class FlashModule {
         }
     }
     
-    // Воспроизведение звука (автовыбор: файл или встроенный)
     async playSound(fileName = null) {
-        // Если указан конкретный файл или есть выбранный файл
         const targetFile = fileName || this.options.soundFile;
         
-        if (targetFile && !this.useBuiltin) {
-            // Пробуем воспроизвести файл
+        if (targetFile && !this.useBuiltin && this.options.soundEnabled) {
             const success = await this._playFileSound(targetFile);
-            if (success) return;
-            // Если не получилось — переключаемся на встроенный
+            if (success) return true;
             this.useBuiltin = true;
         }
         
-        // Встроенный звук
-        return this._playBuiltinSound();
+        if (this.options.soundEnabled) {
+            return this._playBuiltinSound();
+        }
+        
+        return false;
     }
     
-    // Воспроизведение файлового звука
     async _playFileSound(fileName) {
         return new Promise((resolve) => {
             const soundUrl = this.getSoundUrl(fileName);
@@ -209,61 +196,63 @@ class FlashModule {
                 return;
             }
             
+            const urlWithCacheBust = soundUrl + '?t=' + Date.now();
             const audio = new Audio();
-            audio.src = soundUrl;
+            audio.src = urlWithCacheBust;
             audio.volume = this.options.soundVolume;
+            audio.preload = 'auto';
             
             let resolved = false;
             
-            const onEnded = () => {
-                if (resolved) return;
-                resolved = true;
-                cleanup();
-                if (this.options.onSoundEnd) this.options.onSoundEnd();
-                resolve(true);
+            const onCanPlay = () => {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        if (!resolved) {
+                            resolved = true;
+                            if (this.options.onSoundStart) this.options.onSoundStart(fileName);
+                            resolve(true);
+                        }
+                    }).catch(() => {
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(false);
+                        }
+                    });
+                }
             };
             
             const onError = () => {
-                if (resolved) return;
-                resolved = true;
-                cleanup();
-                this._log(`Файл ${fileName} не воспроизвёлся`);
-                resolve(false);
+                if (!resolved) {
+                    resolved = true;
+                    resolve(false);
+                }
             };
             
-            const cleanup = () => {
-                audio.removeEventListener('ended', onEnded);
-                audio.removeEventListener('error', onError);
+            const onEnded = () => {
+                if (this.options.onSoundEnd) this.options.onSoundEnd();
             };
             
-            audio.addEventListener('ended', onEnded);
+            audio.addEventListener('canplaythrough', onCanPlay);
             audio.addEventListener('error', onError);
+            audio.addEventListener('ended', onEnded);
             
-            audio.play().catch(() => {
-                onError();
-            });
+            audio.load();
             
-            if (this.options.onSoundStart) this.options.onSoundStart(fileName);
-            
-            // Таймер-защита
             setTimeout(() => {
                 if (!resolved) {
                     resolved = true;
-                    cleanup();
-                    if (!audio.paused) audio.pause();
                     resolve(false);
                 }
-            }, 10000);
+            }, 5000);
         });
     }
     
-    // Встроенный синтезированный звук
     async _playBuiltinSound() {
         const duration = this.options.builtinSoundDuration;
         const frequency = this.options.builtinSoundFrequency;
         
         if (!window.AudioContext && !window.webkitAudioContext) {
-            this._log("Web Audio не поддерживается");
             return false;
         }
         
@@ -271,7 +260,6 @@ class FlashModule {
             try {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             } catch(e) {
-                this._logError("Не удалось создать AudioContext");
                 return false;
             }
         }
@@ -287,8 +275,12 @@ class FlashModule {
             const gainNode = this.audioCtx.createGain();
             gainNode.gain.setValueAtTime(this.options.soundVolume, now);
             const fadeStart = Math.max(0, durationSec - 0.3);
-            gainNode.gain.setValueAtTime(this.options.soundVolume, now + fadeStart);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+            if (fadeStart > 0) {
+                gainNode.gain.setValueAtTime(this.options.soundVolume, now + fadeStart);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+            } else {
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+            }
             
             const oscillator = this.audioCtx.createOscillator();
             oscillator.type = 'sine';
@@ -307,25 +299,89 @@ class FlashModule {
         });
     }
     
-    // Основная функция: звук → вспышка
-    async play() {
+    // Вспышка горит всё время проигрывания звука
+    async playFlashWithSound(soundFile = null) {
         if (this.isPlaying) {
-            this._log("Уже выполняется");
             return false;
         }
         
         this.isPlaying = true;
         
-        const cameraPromise = this.initCamera();
+        try {
+            await this.initCamera();
+            
+            // Включаем вспышку
+            await this._setTorch(true);
+            if (this.options.onFlashStart) this.options.onFlashStart();
+            
+            // Настраиваем звук
+            if (soundFile) {
+                this.options.soundFile = soundFile;
+                this.useBuiltin = false;
+            }
+            
+            // Воспроизводим звук и ждём окончания
+            if (this.options.soundEnabled) {
+                await this.playSound();
+            }
+            
+            // Выключаем вспышку после звука
+            await this._setTorch(false);
+            if (this.options.onFlashEnd) this.options.onFlashEnd();
+            
+            return true;
+        } catch (err) {
+            console.error("[FlashModule] playFlashWithSound error:", err);
+            try { await this._setTorch(false); } catch(e) {}
+            return false;
+        } finally {
+            this.isPlaying = false;
+        }
+    }
+    
+    async play() {
+        if (this.isPlaying) return false;
         
-        await this.playSound();
+        this.isPlaying = true;
         
-        await cameraPromise;
-        await new Promise(r => setTimeout(r, 40));
+        await this.initCamera();
+        await this._setTorch(true);
+        if (this.options.onFlashStart) this.options.onFlashStart();
+        
+        if (this.options.soundEnabled) {
+            await this.playSound();
+        }
+        
+        await this._setTorch(false);
+        if (this.options.onFlashEnd) this.options.onFlashEnd();
+        
+        this.isPlaying = false;
+        return true;
+    }
+    
+    async playOnlyFlash() {
+        if (this.isPlaying) return false;
+        
+        this.isPlaying = true;
+        
+        await this.initCamera();
         const result = await this.blink();
         
         this.isPlaying = false;
         return result;
+    }
+    
+    async playOnlySound() {
+        if (this.isPlaying) return false;
+        
+        this.isPlaying = true;
+        
+        if (this.options.soundEnabled) {
+            await this.playSound();
+        }
+        
+        this.isPlaying = false;
+        return true;
     }
     
     async releaseCamera() {
@@ -353,32 +409,19 @@ class FlashModule {
         this.isFlashing = false;
     }
     
-    setFlashDuration(ms) {
-        this.options.flashDuration = ms;
-    }
-    
-    getFlashDuration() {
-        return this.options.flashDuration;
-    }
-    
     setVolume(vol) {
         this.options.soundVolume = Math.min(1, Math.max(0, vol));
+    }
+    
+    setSoundEnabled(enabled) {
+        this.options.soundEnabled = enabled;
     }
     
     isTorchSupported() {
         return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     }
-    
-    _log(...args) {
-        if (this.options.debug) console.log("[FlashModule]", ...args);
-    }
-    
-    _logError(...args) {
-        console.error("[FlashModule]", ...args);
-    }
 }
 
-// Экспорт
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = FlashModule;
 } else if (typeof window !== 'undefined') {
