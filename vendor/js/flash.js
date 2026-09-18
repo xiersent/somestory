@@ -9,6 +9,7 @@ class FlashModule {
             useBuiltinSound: true,
             builtinSoundDuration: 3000,
             builtinSoundFrequency: 880,
+            builtinSoundEnvelope: 'fadeOut',
             soundEnabled: true,
             onReady: null,
             onError: null,
@@ -27,6 +28,9 @@ class FlashModule {
         this.isPlaying = false;
         this.audioElement = null;
         this.audioCtx = null;
+        this._builtinOscillator = null;
+        this._builtinGain = null;
+        this._builtinEndTimer = null;
         this.useBuiltin = !this.options.soundFile;
         
         this.initCamera = this.initCamera.bind(this);
@@ -172,6 +176,30 @@ class FlashModule {
         }
     }
     
+    _stopActiveSound() {
+        if (this._builtinEndTimer) {
+            clearTimeout(this._builtinEndTimer);
+            this._builtinEndTimer = null;
+        }
+        if (this._builtinOscillator) {
+            try { this._builtinOscillator.stop(); } catch (e) {}
+            try { this._builtinOscillator.disconnect(); } catch (e) {}
+            this._builtinOscillator = null;
+        }
+        if (this._builtinGain) {
+            try { this._builtinGain.disconnect(); } catch (e) {}
+            this._builtinGain = null;
+        }
+        if (this.audioElement) {
+            try {
+                this.audioElement.pause();
+                this.audioElement.removeAttribute('src');
+                this.audioElement.load();
+            } catch (e) {}
+            this.audioElement = null;
+        }
+    }
+
     async playSound(fileName = null) {
         const targetFile = fileName || this.options.soundFile;
         
@@ -189,6 +217,7 @@ class FlashModule {
     }
     
     async _playFileSound(fileName) {
+        this._stopActiveSound();
         return new Promise((resolve) => {
             const soundUrl = this.getSoundUrl(fileName);
             if (!soundUrl) {
@@ -203,52 +232,70 @@ class FlashModule {
             audio.preload = 'auto';
             
             let resolved = false;
+            let started = false;
+            let safetyTimer = null;
+            let durationTimer = null;
+            
+            const finish = (ok) => {
+                if (resolved) return;
+                resolved = true;
+                if (safetyTimer) clearTimeout(safetyTimer);
+                if (durationTimer) clearTimeout(durationTimer);
+                resolve(ok);
+            };
+            
+            const markStarted = () => {
+                if (started) return;
+                started = true;
+                if (this.options.onSoundStart) this.options.onSoundStart(fileName);
+                // Если ended не придёт — всё равно считаем успехом (файл уже слышен).
+                // Иначе playSound уйдёт в 3с builtin → long→shutter→long.
+                const ms = (isFinite(audio.duration) && audio.duration > 0)
+                    ? Math.min(8000, audio.duration * 1000 + 150)
+                    : 2000;
+                durationTimer = setTimeout(() => {
+                    if (this.options.onSoundEnd) this.options.onSoundEnd();
+                    finish(true);
+                }, ms);
+            };
             
             const onCanPlay = () => {
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        if (!resolved) {
-                            resolved = true;
-                            if (this.options.onSoundStart) this.options.onSoundStart(fileName);
-                            resolve(true);
-                        }
+                        markStarted();
                     }).catch(() => {
-                        if (!resolved) {
-                            resolved = true;
-                            resolve(false);
-                        }
+                        if (!started) finish(false);
                     });
+                } else {
+                    markStarted();
                 }
             };
             
             const onError = () => {
-                if (!resolved) {
-                    resolved = true;
-                    resolve(false);
-                }
+                if (!started) finish(false);
             };
             
             const onEnded = () => {
                 if (this.options.onSoundEnd) this.options.onSoundEnd();
+                finish(true);
             };
             
             audio.addEventListener('canplaythrough', onCanPlay);
             audio.addEventListener('error', onError);
             audio.addEventListener('ended', onEnded);
             
+            this.audioElement = audio;
             audio.load();
             
-            setTimeout(() => {
-                if (!resolved) {
-                    resolved = true;
-                    resolve(false);
-                }
+            safetyTimer = setTimeout(() => {
+                finish(started);
             }, 5000);
         });
     }
     
     async _playBuiltinSound() {
+        this._stopActiveSound();
         const duration = this.options.builtinSoundDuration;
         const frequency = this.options.builtinSoundFrequency;
         
@@ -273,13 +320,22 @@ class FlashModule {
             const durationSec = duration / 1000;
             
             const gainNode = this.audioCtx.createGain();
-            gainNode.gain.setValueAtTime(this.options.soundVolume, now);
-            const fadeStart = Math.max(0, durationSec - 0.3);
-            if (fadeStart > 0) {
-                gainNode.gain.setValueAtTime(this.options.soundVolume, now + fadeStart);
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+            const vol = Math.max(0.0001, this.options.soundVolume || 0.8);
+            const envelope = this.options.builtinSoundEnvelope || 'fadeOut';
+            if (envelope === 'fadeIn') {
+                // Нарастание: тихо → громко, без затухания в конце
+                gainNode.gain.setValueAtTime(0.0001, now);
+                gainNode.gain.exponentialRampToValueAtTime(vol, now + durationSec);
             } else {
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+                // Затухание в конце (по умолчанию, для удаления)
+                gainNode.gain.setValueAtTime(vol, now);
+                const fadeStart = Math.max(0, durationSec - 0.3);
+                if (fadeStart > 0) {
+                    gainNode.gain.setValueAtTime(vol, now + fadeStart);
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+                } else {
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+                }
             }
             
             const oscillator = this.audioCtx.createOscillator();
@@ -289,10 +345,15 @@ class FlashModule {
             gainNode.connect(this.audioCtx.destination);
             oscillator.start();
             oscillator.stop(now + durationSec);
+            this._builtinOscillator = oscillator;
+            this._builtinGain = gainNode;
             
             if (this.options.onSoundStart) this.options.onSoundStart('[встроенный звук]');
             
-            setTimeout(() => {
+            this._builtinEndTimer = setTimeout(() => {
+                this._builtinEndTimer = null;
+                this._builtinOscillator = null;
+                this._builtinGain = null;
                 if (this.options.onSoundEnd) this.options.onSoundEnd();
                 resolve(true);
             }, duration + 20);
