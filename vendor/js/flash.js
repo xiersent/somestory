@@ -317,25 +317,26 @@ class FlashModule {
         
         return new Promise((resolve) => {
             const now = this.audioCtx.currentTime;
-            const durationSec = duration / 1000;
+            const durationSec = Math.max(0.05, duration / 1000);
+            const fadeSec = Math.min(0.3, durationSec * 0.5);
             
             const gainNode = this.audioCtx.createGain();
             const vol = Math.max(0.0001, this.options.soundVolume || 0.8);
+            const quiet = 0.0001;
             const envelope = this.options.builtinSoundEnvelope || 'fadeOut';
+            const g = gainNode.gain;
+            
+            // Короткая «ступень» в начале/конце (~0.3с), как различимое
+            // нарастание/затухание — не плавный свип на всю длительность.
             if (envelope === 'fadeIn') {
-                // Нарастание: тихо → громко, без затухания в конце
-                gainNode.gain.setValueAtTime(0.0001, now);
-                gainNode.gain.exponentialRampToValueAtTime(vol, now + durationSec);
+                g.setValueAtTime(quiet, now);
+                g.linearRampToValueAtTime(vol, now + fadeSec);
+                g.setValueAtTime(vol, now + fadeSec);
             } else {
-                // Затухание в конце (по умолчанию, для удаления)
-                gainNode.gain.setValueAtTime(vol, now);
-                const fadeStart = Math.max(0, durationSec - 0.3);
-                if (fadeStart > 0) {
-                    gainNode.gain.setValueAtTime(vol, now + fadeStart);
-                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
-                } else {
-                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
-                }
+                g.setValueAtTime(vol, now);
+                const fadeStart = Math.max(0, durationSec - fadeSec);
+                g.setValueAtTime(vol, now + fadeStart);
+                g.linearRampToValueAtTime(quiet, now + durationSec);
             }
             
             const oscillator = this.audioCtx.createOscillator();
@@ -343,7 +344,7 @@ class FlashModule {
             oscillator.frequency.value = frequency;
             oscillator.connect(gainNode);
             gainNode.connect(this.audioCtx.destination);
-            oscillator.start();
+            oscillator.start(now);
             oscillator.stop(now + durationSec);
             this._builtinOscillator = oscillator;
             this._builtinGain = gainNode;
