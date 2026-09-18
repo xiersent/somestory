@@ -318,20 +318,20 @@ class FlashModule {
         return new Promise((resolve) => {
             const now = this.audioCtx.currentTime;
             const durationSec = Math.max(0.05, duration / 1000);
-            const mid = now + durationSec / 2;
             
             const gainNode = this.audioCtx.createGain();
             const vol = Math.max(0.0001, this.options.soundVolume || 0.8);
+            const quiet = 0.0001;
             const envelope = this.options.builtinSoundEnvelope || 'fadeOut';
             const g = gainNode.gain;
             
-            // Тишина ↔ громкость: одно резкое изменение ровно посередине.
+            // Нарастание = обратное затуханию: линейно от тишины к громкости.
             if (envelope === 'fadeIn') {
-                g.setValueAtTime(0, now);
-                g.setValueAtTime(vol, mid);
+                g.setValueAtTime(quiet, now);
+                g.linearRampToValueAtTime(vol, now + durationSec);
             } else {
                 g.setValueAtTime(vol, now);
-                g.setValueAtTime(0, mid);
+                g.linearRampToValueAtTime(quiet, now + durationSec);
             }
             
             const oscillator = this.audioCtx.createOscillator();
