@@ -318,25 +318,20 @@ class FlashModule {
         return new Promise((resolve) => {
             const now = this.audioCtx.currentTime;
             const durationSec = Math.max(0.05, duration / 1000);
-            const fadeSec = Math.min(0.3, durationSec * 0.5);
+            const mid = now + durationSec / 2;
             
             const gainNode = this.audioCtx.createGain();
             const vol = Math.max(0.0001, this.options.soundVolume || 0.8);
-            const quiet = 0.0001;
             const envelope = this.options.builtinSoundEnvelope || 'fadeOut';
             const g = gainNode.gain;
             
-            // Короткая «ступень» в начале/конце (~0.3с), как различимое
-            // нарастание/затухание — не плавный свип на всю длительность.
+            // Тишина ↔ громкость: одно резкое изменение ровно посередине.
             if (envelope === 'fadeIn') {
-                g.setValueAtTime(quiet, now);
-                g.linearRampToValueAtTime(vol, now + fadeSec);
-                g.setValueAtTime(vol, now + fadeSec);
+                g.setValueAtTime(0, now);
+                g.setValueAtTime(vol, mid);
             } else {
                 g.setValueAtTime(vol, now);
-                const fadeStart = Math.max(0, durationSec - fadeSec);
-                g.setValueAtTime(vol, now + fadeStart);
-                g.linearRampToValueAtTime(quiet, now + durationSec);
+                g.setValueAtTime(0, mid);
             }
             
             const oscillator = this.audioCtx.createOscillator();
